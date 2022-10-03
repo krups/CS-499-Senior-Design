@@ -5,7 +5,9 @@
 #include <wiringSerial.h>
 #include "config.h"
 
+#if PRINT_DATA
 #include <iostream> // used for printing vectors in tests
+#endif
 #include <vector> // temporarily store data
 #include <string> 
 
