@@ -34,8 +34,11 @@ int main()
   std::string line = "";
   std::vector<int> split_line;
   std::vector<std::vector<int>> data;
+  #if PRINT_DATA
+  int x = 0;
+  #endif
 
-  for (int x = 0;;)
+  for (;;)
   {
     // Gets the first int, converts to char and adds to string
     letter = (char)serialGetchar(fd);
@@ -70,15 +73,14 @@ int main()
       split_line.clear();
 
       // Prints all data within vector that was just saved, if PRINT_DATA is set
-      if (PRINT_DATA)
+      #if PRINT_DATA
+      for (int j=0; j < (int) data.at(x).size(); j++)
       {
-        for (int j=0; j < (int) data.at(x).size(); j++)
-        {
-          std::cout << data.at(x).at(j) << ' ';
-        }
-        std::cout << '\n';
-        x++;
+        std::cout << data.at(x).at(j) << ' ';
       }
+      std::cout << '\n';
+      x++;
+      #endif
     }
   }
   
