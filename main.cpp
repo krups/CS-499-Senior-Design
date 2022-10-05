@@ -40,11 +40,15 @@ int main()
     // End of line
     if (letter == '\n')
     {
-      // Send message back (requires command to always be 3 decimal digits)
-      // TODO: Make this more general
-      code += line[0];
-      code += line[1];
-      code += line[2];
+      int x = 0;
+      // Get command/sensor id
+      while (line[x] != ',')
+      {
+        code += line[x];
+        x++;
+      }
+
+      // If command
       if (stoi(code) == COMMAND) // or something like this
       {
         printf("Sending packet!\n");
