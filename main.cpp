@@ -5,11 +5,7 @@
 #include <wiringSerial.h>
 #include "config.h"
 
-#if PRINT_DATA
 #include <iostream> // used for printing vectors in tests
-#endif
-#include <vector> // temporarily store data
-#include <string> 
 
 int main()
 {
@@ -30,59 +26,54 @@ int main()
 
   // Variables for reading in data
   char letter;
-  std::string section = "";
-  std::string line = "";
-  std::vector<int> split_line;
-  std::vector<std::vector<int>> data;
-  #if PRINT_DATA
-  int x = 0;
-  #endif
+  char line[MAX_CHARS];
+  int pos = 0;
+  std::string code = "";
 
   for (;;)
   {
-    // Gets the first int, converts to char and adds to string
+    // Gets the first int, converts to char
     letter = (char)serialGetchar(fd);
-    line += letter;
+    line[pos] = letter;
+    pos++;
 
     // End of line
     if (letter == '\n')
     {
-      // Loop through every letter
-      for (char letter: line)
+      // Send message back (requires command to always be 3 decimal digits)
+      // TODO: Make this more general
+      code += line[0];
+      code += line[1];
+      code += line[2];
+      if (stoi(code) == COMMAND) // or something like this
       {
-        // End of section
-        if (letter == ',')
-        {
-          split_line.push_back(std::stoi(section));
-          section = "";
-        }
-        // Section continues
-        else
-        {
-          section += letter;
-        }
+        printf("Sending packet!\n");
+        serialPuts(fd, "hi");
       }
-
-      // Add data to vectors
-      split_line.push_back(std::stoi(section));
-      data.push_back(split_line);
-
-      // Resets variables
-      line = "";
-      section = "";
-      split_line.clear();
-
+      // Save data
+      else
+      {
+        // saveData(line) or whatever
+      }
+      
       // Prints all data within vector that was just saved, if PRINT_DATA is set
-      #if PRINT_DATA
-      for (int j=0; j < (int) data.at(x).size(); j++)
+      #ifdef PRINT_DATA
+      pos = 0;
+      letter = line[pos];
+      while (letter != '\n')
       {
-        std::cout << data.at(x).at(j) << ' ';
+        printf("%c", letter);
+        letter = line[++pos];
       }
-      std::cout << '\n';
-      x++;
+      printf("\n");
       #endif
-    }
-  }
+      
+      // Reset variables
+      pos = 0;
+      code = "";
+
+    } // end if
+  } // end for
   
   return 0;
-}
+} // end main()
