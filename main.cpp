@@ -42,7 +42,7 @@ int main()
     {
       int x = 0;
       // Get command/sensor id
-      while (line[x] != ',')
+      while (line[x] != ',' && line[x] != '\n')
       {
         code += line[x];
         x++;
