@@ -1,12 +1,7 @@
-#include <stdio.h>
-#include <string>
-#include <errno.h>
-#include <wiringPi.h>
-#include <wiringSerial.h>
-#include <fstream>
-
 #ifndef CONFIG_H
 #define CONFIG_H
+
+#include <string>
 
 // Serial port which interfaces with Feather M4 Express
 #define SERIAL_FEATHER "/dev/ttyS1"
@@ -29,5 +24,12 @@ const string sensorDataPath = "./data/"; // This directory must exist before run
 #define PRINT_DATA
 
 #endif
+
+// Validity parameters
+// Check for erroneous data 
+#define NAN "NaN"
+
+#define TC_LOW -1000
+#define TC_MAX 10000
 
 #endif
