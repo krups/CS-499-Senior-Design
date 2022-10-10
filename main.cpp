@@ -1,11 +1,24 @@
-#include <stdio.h>
-#include <string>
-#include <errno.h>
-#include <wiringPi.h>
-#include <wiringSerial.h>
 #include "config.h"
 
 #include <iostream> // used for printing vectors in tests
+
+void saveData(char* data) {
+  int sensorId = (sensor_id) data;
+
+  ofstream sensorDataFile;
+
+  // SEMAPHORE WAIT
+
+  sensorDataFile = open(sensorDataPath + sensorId, "a");
+
+  if (!sensorDataFile.fail()) {
+    sensorDataFile << data;
+  }
+
+  sensorDataFile.close();
+
+  // SEMAPHORE SIGNAL
+}
 
 int main()
 {
@@ -58,6 +71,7 @@ int main()
       else
       {
         // saveData(line) or whatever
+        saveData(line);
       }
       
       // Prints all data within vector that was just saved, if PRINT_DATA is set
@@ -75,6 +89,7 @@ int main()
       // Reset variables
       pos = 0;
       code = "";
+      memset(line, '\0', MAX_CHARS * sizeof(char));
 
     } // end if
   } // end for
