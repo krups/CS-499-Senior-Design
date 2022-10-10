@@ -1,9 +1,18 @@
-#include "config.h"
-
+#include <stdio.h>
+#include <errno.h>
+#include <wiringPi.h>
+#include <wiringSerial.h>
+#include <fstream>
 #include <iostream> // used for printing vectors in tests
 
-void saveData(char* data) {
-  int sensorId = (sensor_id) data;
+#include "serial_headers.h"
+#include "data.h"
+#include "config.h"
+
+
+void saveData(char *data)
+{
+  int sensorId = (sensor_id)data;
 
   ofstream sensorDataFile;
 
@@ -11,7 +20,8 @@ void saveData(char* data) {
 
   sensorDataFile = open(sensorDataPath + sensorId, "a");
 
-  if (!sensorDataFile.fail()) {
+  if (!sensorDataFile.fail())
+  {
     sensorDataFile << data;
   }
 
@@ -20,8 +30,20 @@ void saveData(char* data) {
   // SEMAPHORE SIGNAL
 }
 
+bool checkValid(Data data)
+{
+  u_int16_t points = data.getData();
+  for (int i = 0; i < data.getData(); i++)
+  { 
+    // Add checks to correspond with validity parameters in config.h
+    if (points[i] == NAN) return false;
+    if (data.getType() == TC_SERIAL && (points[i] < TC_LOW || points[i] > TC_MAX)) return false;
+  }
+}
+
 int main()
 {
+  // Initialization
   int fd;
   if ((fd = serialOpen(SERIAL_FEATHER, 115200)) < 0)
   {
@@ -71,11 +93,13 @@ int main()
       else
       {
         // saveData(line) or whatever
-        saveData(line);
+        Data data(line);
+        if (checkValid(data))
+          saveData(line);
       }
-      
-      // Prints all data within vector that was just saved, if PRINT_DATA is set
-      #ifdef PRINT_DATA
+
+// Prints all data within vector that was just saved, if PRINT_DATA is set
+#ifdef PRINT_DATA
       pos = 0;
       letter = line[pos];
       while (letter != '\n')
@@ -84,15 +108,15 @@ int main()
         letter = line[++pos];
       }
       printf("\n");
-      #endif
-      
+#endif
+
       // Reset variables
       pos = 0;
       code = "";
       memset(line, '\0', MAX_CHARS * sizeof(char));
 
     } // end if
-  } // end for
-  
+  }   // end for
+
   return 0;
 } // end main()
