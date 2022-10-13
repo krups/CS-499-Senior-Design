@@ -4,27 +4,36 @@
 #include <wiringSerial.h>
 #include <fstream>
 #include <iostream> // used for printing vectors in tests
+#include <cstdint>
+#include <math.h>
 
 #include "serial_headers.h"
 #include "data.h"
 #include "config.h"
 
-
-void saveData(char *data)
+void saveData(Data data)
 {
-  int sensorId = (sensor_id)data;
-
-  ofstream sensorDataFile;
+#ifdef PRINT_DATA
+  data.printData();
+#endif
+  std::ofstream sensorDataFile;
+  std::string path = sensorDataPath;
+  path += std::to_string(data.getType());
 
   // SEMAPHORE WAIT
 
-  sensorDataFile = open(sensorDataPath + sensorId, "a");
-
+  sensorDataFile.open(path, std::ios_base::app);
   if (!sensorDataFile.fail())
   {
     sensorDataFile << data;
+#ifdef PRINT_DATA
+    printf("Saved %d, %u to file!\n", data.getType(), data.getTimeStamp());
+#endif
   }
-
+  else
+#ifdef PRINT_DATA
+    printf("Open: %s failed!\n", path);
+#endif
   sensorDataFile.close();
 
   // SEMAPHORE SIGNAL
@@ -32,13 +41,26 @@ void saveData(char *data)
 
 bool checkValid(Data data)
 {
-  u_int16_t points = data.getData();
-  for (int i = 0; i < data.getData(); i++)
-  { 
-    // Add checks to correspond with validity parameters in config.h
-    if (points[i] == NAN) return false;
-    if (data.getType() == TC_SERIAL && (points[i] < TC_LOW || points[i] > TC_MAX)) return false;
+  std::vector<u_int16_t> points = data.getData();
+  for (int i = 0; i < data.getNumVals(); i++)
+  { // Add checks to correspond with validity parameters in config.h
+    if (points[i] == NAN)
+    {
+#ifdef VALIDITY
+      printf("Error %u: Validity check failed! Data is NULL\n", data.getTimeStamp());
+#endif
+      return false;
+    }
+
+    if (data.getType() == TC_SERIAL && (points[i] < TC_LOW || points[i] > TC_MAX))
+    {
+#ifdef VALIDITY
+      printf("Error %u: TC validity check failed!\n", data.getTimeStamp());
+#endif
+      return false;
+    }
   }
+  return true;
 }
 
 int main()
@@ -84,7 +106,7 @@ int main()
       }
 
       // If command
-      if (stoi(code) == COMMAND) // or something like this
+      if (stoi(code) == PACKET_REQUEST) // or something like this
       {
         printf("Sending packet!\n");
         serialPuts(fd, "hi");
@@ -92,23 +114,26 @@ int main()
       // Save data
       else
       {
+#ifdef PRINT_DATA
+        printf("line = %s\n", line);
+#endif
+        Data datum(line);
         // saveData(line) or whatever
-        Data data(line);
-        if (checkValid(data))
-          saveData(line);
+        if (checkValid(datum))
+          saveData(datum);
       }
 
-// Prints all data within vector that was just saved, if PRINT_DATA is set
-#ifdef PRINT_DATA
-      pos = 0;
-      letter = line[pos];
-      while (letter != '\n')
-      {
-        printf("%c", letter);
-        letter = line[++pos];
-      }
-      printf("\n");
-#endif
+      // // Prints all data within vector that was just saved, if PRINT_DATA is set
+      // #ifdef PRINT_DATA
+      //       pos = 0;
+      //       letter = line[pos];
+      //       while (letter != '\n')
+      //       {
+      //         printf("%c", letter);
+      //         letter = line[++pos];
+      //       }
+      //       printf("\n");
+      // #endif
 
       // Reset variables
       pos = 0;
