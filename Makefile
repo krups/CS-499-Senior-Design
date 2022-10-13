@@ -9,3 +9,4 @@ kaps:
 
 clean:
 	rm -f $(GOAL) a.out
+	rm -rf ./data/*
