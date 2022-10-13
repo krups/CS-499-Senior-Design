@@ -1,4 +1,3 @@
-#include <vector>
 #include "data.h"
 
 /**
@@ -19,21 +18,33 @@ Data::Data(char *line)
     }
     type = atoi(tokens[0]);
     time_stamp = (u_int16_t)atoi(tokens[1]);
-    int num_vals = atoi(tokens[2]);
-    data = new u_int16_t[num_vals];
+    num_vals = atoi(tokens[2]);
     for (int i = 3; i < num_vals + 3; i++)
     {
-
-        data[i] = (u_int16_t)atoi(tokens[i]);
+        data.push_back((u_int16_t)atoi(tokens[i]));
     }
 }
 
 /**
- * @brief Get the Type object
- * 
- * @return int 
+ * @brief Construct a copy Data:: Data object
+ *
+ * @param x
  */
-int Data::getType() {
+Data::Data(const Data &x)
+{
+    type = x.type;
+    num_vals = x.num_vals;
+    time_stamp = x.time_stamp;
+    data = x.data;
+}
+
+/**
+ * @brief Get the Type object
+ *
+ * @return int
+ */
+int Data::getType()
+{
     return type;
 }
 
@@ -62,19 +73,29 @@ u_int16_t Data::getTimeStamp()
  *
  * @return u_int16_t*
  */
-u_int16_t *Data::getData()
+std::vector<u_int16_t> Data::getData()
 {
     return data;
 }
 
 /**
- * @brief Destroy the Data:: Data object
+ * @brief Prints data to console for debugging
  *
  */
-Data::~Data()
+void Data::printData()
 {
-    if (data != nullptr)
+    std::cout << "Printing data for " << type << std::endl;
+    for (int i = 0; i < num_vals; i++)
     {
-        delete data;
+        std::cout << "val_" << i << ": " << data[i] << std::endl;
     }
+}
+
+std::ostream &operator<<(std::ostream &out, const Data &x)
+{
+    out << x.type << "\n" << x.time_stamp << "\n" << x.num_vals << "\n";
+    for (auto y : x.data) {
+        out << y << "\n";
+    }
+    return out;
 }
