@@ -84,7 +84,7 @@ std::vector<u_int16_t> Data::getData()
  */
 void Data::printData()
 {
-    std::cout << "Printing data for " << type << std::endl;
+    std::cout << "Printing data for " << type << ": " << time_stamp << std::endl;
     for (int i = 0; i < num_vals; i++)
     {
         std::cout << "val_" << i << ": " << data[i] << std::endl;
@@ -93,9 +93,10 @@ void Data::printData()
 
 std::ostream &operator<<(std::ostream &out, const Data &x)
 {
-    out << x.type << "\n" << x.time_stamp << "\n" << x.num_vals << "\n";
+    out << x.type << "," << x.time_stamp << "," << x.num_vals;
     for (auto y : x.data) {
-        out << y << "\n";
+        out << "," << y;
     }
+    out << "\n";
     return out;
 }
