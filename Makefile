@@ -7,6 +7,8 @@ run: $(GOAL)
 kaps:
 	g++ -o $(GOAL) main.cpp data.cpp $(FLAGS)
 
-clean:
-	rm -f $(GOAL) a.out
+cleanData:
 	rm -rf ./data/*
+
+clean: cleanData
+	rm -f $(GOAL) a.out
