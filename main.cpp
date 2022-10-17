@@ -44,18 +44,30 @@ bool checkValid(Data data)
   std::vector<u_int16_t> points = data.getData();
   for (int i = 0; i < data.getNumVals(); i++)
   { // Add checks to correspond with validity parameters in config.h
+
+    // Check for valid numbers
     if (points[i] == NAN)
     {
 #ifdef VALIDITY
-      printf("Error %u: Validity check failed! Data is NULL\n", data.getTimeStamp());
+      printf("Error %u: Validity check failed! with '%d is NAN'!\n", data.getTimeStamp(), i);
 #endif
       return false;
     }
 
+    // TC Validity Check
     if (data.getType() == TC_SERIAL && (points[i] < TC_LOW || points[i] > TC_MAX))
     {
 #ifdef VALIDITY
-      printf("Error %u: TC validity check failed!\n", data.getTimeStamp());
+      printf("Error %u: TC validity check failed with '%d = %u'!\n", data.getTimeStamp(), i, points[i]);
+#endif
+      return false;
+    }
+
+    // ACC Validity Check
+    if (data.getType() == ACC_SERIAL && (points[i] < ACC_LOW || points[i] > ACC_HIGH))
+    {
+#ifdef VALIDITY
+      printf("Error %u: ACC validity check failed with '%d = %u'!\n", data.getTimeStamp(), i, points[i]);
 #endif
       return false;
     }
