@@ -18,7 +18,7 @@ const std::string sensorDataPath = "./data/"; // This directory must exist befor
 // add toggles for feature debugging
 
 // Prints data being received
-#define PRINT_DATA
+// #define PRINT_DATA
 #define VALIDITY
 #endif
 
@@ -27,5 +27,8 @@ const std::string sensorDataPath = "./data/"; // This directory must exist befor
 
 #define TC_LOW -1000
 #define TC_MAX 10000
+
+#define ACC_LOW -100
+#define ACC_HIGH 100
 
 #endif
