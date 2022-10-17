@@ -5,7 +5,10 @@ run: $(GOAL)
 	sudo ./$(GOAL)
 
 kaps:
-	g++ -o $(GOAL) main.cpp $(FLAGS)
+	g++ -o $(GOAL) main.cpp data.cpp $(FLAGS)
 
-clean:
+cleanData:
+	rm -rf ./data/*
+
+clean: cleanData
 	rm -f $(GOAL) a.out
