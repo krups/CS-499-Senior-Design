@@ -44,6 +44,7 @@ void printACC()
     }
     Serial1.print('\n');
 }
+
 void printIMU()
 {
     int n = 6;
