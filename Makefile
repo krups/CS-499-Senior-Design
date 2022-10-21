@@ -10,8 +10,8 @@ kaps:
 cleanData:
 	rm -rf ./data/*
 
-test: main.cpp
-	g++ -o test main.cpp -Wall -pthread
+test: mainTest.cpp data.cpp
+	g++ -o test mainTest.cpp data.cpp -Wall -pthread
 
 clean:
 	rm -f $(GOAL) a.out
