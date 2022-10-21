@@ -2,13 +2,9 @@
 #define CONFIG_H
 
 #include <string>
+#include "Sensors.h"
 
-struct Sensor {
-  sensor_id_t id;
-  uint8_t priority;
-};
-
-std::vector<Sensor> activeSensors;
+SensorList sensors;
 
 // Serial port which interfaces with Feather M4 Express
 #define SERIAL_FEATHER "/dev/ttyS1"
@@ -17,8 +13,7 @@ std::vector<Sensor> activeSensors;
 #define MAX_CHARS 256
 
 // Sensor ID Config
-typedef uint8_t sensor_id_t;
-typedef uint16_t sensor_timestamp_t;
+
 const std::string sensorDataPath = "./data/"; // This directory must exist before running the program
 
 #define THERMOCOUPLE 1
@@ -26,9 +21,9 @@ const std::string sensorDataPath = "./data/"; // This directory must exist befor
 #define ACCELEROMETER 3
 
 // Active Sensors
-activeSensors.push_back(Sensor(THERMOCOUPLE, 1));
-activeSensors.push_back(Sensor(SPECTROMETER, 1));
-activeSensors.push_back(Sensor(ACCELEROMETER, 1));
+sensors.addSensor(THERMOCOUPLE, 1);
+sensors.addSensor(SPECTROMETER, 1);
+sensors.addSensor(ACCELEROMETER, 1);
 
 // Data Selection Config
 #define BYTE_TARGET 500
