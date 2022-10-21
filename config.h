@@ -3,6 +3,9 @@
 
 #include <string>
 
+// Maximum packet size in bytes
+#define PACKET_SIZE 340
+
 // Serial port which interfaces with Feather M4 Express
 #define SERIAL_FEATHER "/dev/ttyS1"
 
@@ -11,7 +14,7 @@
 
 // Sensor ID Config
 typedef char sensor_id_t;
-const std::string sensorDataPath = "./data/"; // This directory must exist before running the program
+const std::string SENSOR_DATA_PATH = "./data/"; // This directory must exist before running the program
 
 #define DEBUG // comment/uncomment to enable/disable debugging logs
 #ifdef DEBUG
