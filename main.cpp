@@ -3,7 +3,10 @@
 #include <string>
 #include <pthread.h>
 #include <semaphore.h>
+
 #include "config.h"
+#include "data.h"
+#include "serial_headers.h"
 
 char packetBuffer[PACKET_SIZE];
 sem_t packetSem;
@@ -41,27 +44,45 @@ void * PackagingThread (void * arguments) {
 void * IOThread (void * arguments) {
     printf("Hello feather controller\n");
 
+    // "Connect to the serial stream"
+    std::ifstream serialInput("sample_data/input.txt");
+    std::string command;
+    std::string data;
+
     for (int i = 0; i < 10; i++) {
-        // File path of sensor data file
-        std::ofstream sensorDataFile;
-        std::string path = SENSOR_DATA_PATH;
-        path += "favWord";
+        // Read first part of input
+        getline(serialInput, command, ',');
+        std::cout << command << std::endl;
 
-        // Write to the sensor data file
-        sem_wait(&sensor1Sem);
-        printf("THREAD 1: Writing data to file\n");
-        sensorDataFile.open(path, std::ios_base::app);
-        if (!sensorDataFile.fail()) {
-            sensorDataFile << "baboon";
-            sensorDataFile.close();
+        // Return most recent packet if command
+        if (stoi(command) == PACKET_REQUEST) // or something like this
+        {
+            serialInput.ignore(MAX_CHARS, '\n');  // consume newline after command
+            sem_wait(&packetSem);
+            printf("THREAD 1: Sending packet to terminal\n");
+            printf("Your favorite character is %c\n", packetBuffer[0]);
+            sem_post(&packetSem);   
         }
-        sem_post(&sensor1Sem);
+        // Otherwise, save data
+        else {
+            // Get the data
+            getline(serialInput, data);
 
-        // Read the most recent created packet
-        sem_wait(&packetSem);
-        printf("THREAD 1: Sending packet to terminal\n");
-        printf("Your favorite character is %c\n", packetBuffer[0]);
-        sem_post(&packetSem);        
+            // File path of sensor data file
+            std::ofstream sensorDataFile;
+            std::string path = SENSOR_DATA_PATH;
+            path += command;
+
+            // Write to the sensor data file
+            sem_wait(&sensor1Sem);
+            printf("THREAD 1: Writing data to file\n");
+            sensorDataFile.open(path, std::ios_base::app);
+            if (!sensorDataFile.fail()) {
+                sensorDataFile << command << "," << data << std::endl;
+                sensorDataFile.close();
+            }
+            sem_post(&sensor1Sem);    
+        }
     }
     return NULL;
 }
@@ -69,6 +90,7 @@ void * IOThread (void * arguments) {
 int main() {
     printf("I'm having a KRUPSy day\n");
 
+    // Start semaphores
     if ( sem_init(&packetSem, 0, 1) != 0 ) {
        printf("ERROR: Semaphore failed\n");
     }
@@ -77,6 +99,7 @@ int main() {
        printf("ERROR: Semaphore failed\n");
     }
 
+    // Start threads
     pthread_t thread1, thread2;
     pthread_create(&thread1, NULL, PackagingThread, NULL);
     pthread_create(&thread2, NULL, IOThread, NULL);
