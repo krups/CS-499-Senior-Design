@@ -1,8 +1,3 @@
-#include <stdio.h>
-#include <errno.h>
-#include <wiringPi.h>
-#include <wiringSerial.h>
-#include <cstdint>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -106,7 +101,7 @@ void * PackagingThread (void * arguments) {
         // Write first character to packet buffer
         sem_wait(&packetSem);
         printf("THREAD 2: Putting data in packet\n");
-        packetBuffer[0] = data[0];
+        serialPuts(fd, data);
         sem_post(&packetSem);
     }
 
@@ -116,95 +111,51 @@ void * PackagingThread (void * arguments) {
 void * IOThread (void * arguments) {
     printf("Hello feather controller\n");
 
-    // Initialization
-    int fd;
-    if ((fd = serialOpen(SERIAL_FEATHER, 115200)) < 0)
-    {
-        fprintf(stderr, "Unable to open serial device: %s\n", strerror(errno));
-        return 1;
-    }
-    printf("Connected to %s!\n", SERIAL_FEATHER);
-    if (wiringPiSetup() == -1)
-    {
-        fprintf(stdout, "Unable to start wiringPi: %s\n", strerror(errno));
-        return 1;
-    }
-    printf("wiringPi set up!\n");
-    printf("Listening for serial!\n");
-
-    // Variables for reading in data
-    char letter;
-    char line[MAX_CHARS];
-    int pos = 0;
-    std::string code = "";
-
-    while(true) {
-        // Gets the first int, converts to char
-        letter = (char)serialGetchar(fd);
-        line[pos] = letter;
-        pos++;
-
-        // End of line
-        if (letter == '\n')
-        {
-            int x = 0;
-            // Get command/sensor id
-            while (line[x] != ',' && line[x] != '\n')
-            {
-                code += line[x];
-                x++;
-            }
-                
-            // Return most recent packet if command
-            if (stoi(code) == PACKET_REQUEST) // or something like this
-            {
-                sem_wait(&packetSem);
-                printf("THREAD 1: Sending packet to terminal\n");
-                printf("Your favorite character is %c\n", packetBuffer[0]);
-                sem_post(&packetSem);   
-            }
-            // Otherwise, save data
-            else {
-                // Get the data
-                getline(serialInput, data);
-
-                // File path of sensor data file
-                std::ofstream sensorDataFile;
-                std::string path = SENSOR_DATA_PATH;
-                path += command;
-
-                // Write to the sensor data file
-                sem_wait(&sensor1Sem);
-                printf("THREAD 1: Writing data to file\n");
-                sensorDataFile.open(path, std::ios_base::app);
-                if (!sensorDataFile.fail()) {
-                    std::string line = command + "," + data + "\n";
-                    #ifdef PRINT_DATA
-                        printf("line = %s\n", line);
-                    #endif
-                    Data datum(const_cast<char*>(line.c_str()));
-                    // saveData(line) or whatever
-                    if (checkValid(datum))
-                        saveData(datum);
-                    sensorDataFile.close();
-                }
-                sem_post(&sensor1Sem);   
-            }
-            // Reset variables
-            pos = 0;
-            code = "";
-            memset(line, '\0', MAX_CHARS * sizeof(char));
-        }
-    }
-
-
+    // "Connect to the serial stream"
+    std::ifstream serialInput("sample_data/input.txt");
+    std::string command;
+    std::string data;
 
     for (int i = 0; i < 10; i++) {
         // Read first part of input
         getline(serialInput, command, ',');
         std::cout << command << std::endl;
 
-         
+        // Return most recent packet if command
+        if (stoi(command) == PACKET_REQUEST) // or something like this
+        {
+            serialInput.ignore(MAX_CHARS, '\n');  // consume newline after command
+            sem_wait(&packetSem);
+            printf("THREAD 1: Sending packet to terminal\n");
+            printf("Your favorite character is %c\n", packetBuffer[0]);
+            sem_post(&packetSem);   
+        }
+        // Otherwise, save data
+        else {
+            // Get the data
+            getline(serialInput, data);
+
+            // File path of sensor data file
+            std::ofstream sensorDataFile;
+            std::string path = SENSOR_DATA_PATH;
+            path += command;
+
+            // Write to the sensor data file
+            sem_wait(&sensor1Sem);
+            printf("THREAD 1: Writing data to file\n");
+            sensorDataFile.open(path, std::ios_base::app);
+            if (!sensorDataFile.fail()) {
+                std::string line = command + "," + data + "\n";
+                #ifdef PRINT_DATA
+                    printf("line = %s\n", line);
+                #endif
+                Data datum(const_cast<char*>(line.c_str()));
+                // saveData(line) or whatever
+                if (checkValid(datum))
+                    saveData(datum);
+                sensorDataFile.close();
+            }
+            sem_post(&sensor1Sem);    
         }
     }
     return NULL;
