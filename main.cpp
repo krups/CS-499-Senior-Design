@@ -21,65 +21,67 @@ sem_t sensor1Sem;
 void saveData(Data data)
 {
 #ifdef PRINT_DATA
-  data.printData();
+    data.printData();
 #endif
-  std::ofstream sensorDataFile;
-  std::string path = SENSOR_DATA_PATH;
-  path += std::to_string(data.getType());
+    std::ofstream sensorDataFile;
+    std::string path = SENSOR_DATA_PATH;
+    path += std::to_string(data.getType());
 
-  sensorDataFile.open(path, std::ios_base::app);
-  if (!sensorDataFile.fail())
-  {
-    sensorDataFile << data;
+    sensorDataFile.open(path, std::ios_base::app);
+    if (!sensorDataFile.fail())
+    {
+        sensorDataFile << data;
 #ifdef PRINT_DATA
-    printf("Saved %d, %u to file!\n", data.getType(), data.getTimeStamp());
+        printf("Saved %d, %u to file!\n", data.getType(), data.getTimeStamp());
 #endif
-  }
-  else
+    }
+    else
 #ifdef PRINT_DATA
-    printf("Open: %s failed!\n", path);
+        printf("Open: %s failed!\n", path);
 #endif
-  sensorDataFile.close();
+    sensorDataFile.close();
 }
 
 bool checkValid(Data data)
 {
-  std::vector<u_int16_t> points = data.getData();
-  for (int i = 0; i < data.getNumVals(); i++)
-  { // Add checks to correspond with validity parameters in config.h
+    std::vector<u_int16_t> points = data.getData();
+    for (int i = 0; i < data.getNumVals(); i++)
+    { // Add checks to correspond with validity parameters in config.h
 
-    // Check for valid numbers
-    if (points[i] == NAN)
-    {
+        // Check for valid numbers
+        if (points[i] == NAN)
+        {
 #ifdef VALIDITY
-      printf("Error %u: Validity check failed! with '%d is NAN'!\n", data.getTimeStamp(), i);
+            printf("Error %u: Validity check failed! with '%d is NAN'!\n", data.getTimeStamp(), i);
 #endif
-      return false;
-    }
+            return false;
+        }
 
-    // TC Validity Check
-    if (data.getType() == TC_SERIAL && (points[i] < TC_LOW || points[i] > TC_MAX))
-    {
+        // TC Validity Check
+        if (data.getType() == TC_SERIAL && (points[i] < TC_LOW || points[i] > TC_MAX))
+        {
 #ifdef VALIDITY
-      printf("Error %u: TC validity check failed with '%d = %u'!\n", data.getTimeStamp(), i, points[i]);
+            printf("Error %u: TC validity check failed with '%d = %u'!\n", data.getTimeStamp(), i, points[i]);
 #endif
-      return false;
-    }
+            return false;
+        }
 
-    // ACC Validity Check
-    if (data.getType() == ACC_SERIAL && (points[i] < ACC_LOW || points[i] > ACC_HIGH))
-    {
+        // ACC Validity Check
+        if (data.getType() == ACC_SERIAL && (points[i] < ACC_LOW || points[i] > ACC_HIGH))
+        {
 #ifdef VALIDITY
-      printf("Error %u: ACC validity check failed with '%d = %u'!\n", data.getTimeStamp(), i, points[i]);
+            printf("Error %u: ACC validity check failed with '%d = %u'!\n", data.getTimeStamp(), i, points[i]);
 #endif
-      return false;
+            return false;
+        }
     }
-  }
-  return true;
+    return true;
 }
 
-void * PackagingThread (void * arguments) {
-    while(true) {
+void *PackagingThread(void *arguments)
+{
+    while (true)
+    {
         // File path of sensor data file
         std::string path = SENSOR_DATA_PATH;
         path += "favWord"; // TODO: path to desired sensor
@@ -88,7 +90,8 @@ void * PackagingThread (void * arguments) {
         std::string data;
         sem_wait(&sensor1Sem);
         std::ifstream sensorDataFile(path);
-        if (sensorDataFile.is_open()) {
+        if (sensorDataFile.is_open())
+        {
             getline(sensorDataFile, data);
             sensorDataFile.close();
         }
@@ -96,7 +99,8 @@ void * PackagingThread (void * arguments) {
 
         // Write line to packet buffer
         sem_wait(&packetSem);
-        for (int j = 0; j < (int)data.size(); j++) {
+        for (int j = 0; j < (int)data.size(); j++)
+        {
             packetBuffer[j] = data[j];
         }
         sem_post(&packetSem);
@@ -105,7 +109,8 @@ void * PackagingThread (void * arguments) {
     return NULL;
 } // end PackagingThread
 
-void * IOThread (void * arguments) {
+void *IOThread(void *arguments)
+{
     // Initialization
     int fd;
     if ((fd = serialOpen(SERIAL_FEATHER, 115200)) < 0)
@@ -128,7 +133,8 @@ void * IOThread (void * arguments) {
     int pos = 0;
     std::string code = "";
 
-    while(true) {
+    while (true)
+    {
         // Gets the first int, converts to char
         letter = (char)serialGetchar(fd);
         line[pos] = letter;
@@ -144,17 +150,18 @@ void * IOThread (void * arguments) {
                 code += line[x];
                 x++;
             }
-                
+
             // Return most recent packet if command
             if (stoi(code) == PACKET_REQUEST)
             {
                 sem_wait(&packetSem);
                 // TODO: Send most recent packet
                 serialPuts(fd, packetBuffer);
-                sem_post(&packetSem);   
+                sem_post(&packetSem);
             }
             // Otherwise, save data
-            else {
+            else
+            {
 
 #ifdef PRINT_DATA
                 printf("%s\n", line);
@@ -167,28 +174,31 @@ void * IOThread (void * arguments) {
                 // Save data after checking validity
                 if (checkValid(datum))
                     saveData(datum);
-                
-                sem_post(&sensor1Sem);   
+
+                sem_post(&sensor1Sem);
             } // end else
             // Reset variables
             pos = 0;
             code = "";
             memset(line, '\0', MAX_CHARS * sizeof(char));
         } // end if
-    } // end while(true)
+    }     // end while(true)
 
     return NULL;
 } // end IOThread
 
-int main() {
+int main()
+{
 
     // Start semaphores
-    if ( sem_init(&packetSem, 0, 1) != 0 ) {
-       printf("ERROR: Semaphore failed\n");
+    if (sem_init(&packetSem, 0, 1) != 0)
+    {
+        printf("ERROR: Semaphore failed\n");
     }
 
-    if ( sem_init(&sensor1Sem, 0, 1) != 0 ) {
-       printf("ERROR: Semaphore failed\n");
+    if (sem_init(&sensor1Sem, 0, 1) != 0)
+    {
+        printf("ERROR: Semaphore failed\n");
     }
 
     // Start threads
