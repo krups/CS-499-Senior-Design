@@ -12,3 +12,5 @@ cleanData:
 
 clean: 
 	rm -f $(GOAL) a.out
+
+cleanAll: cleanData clean

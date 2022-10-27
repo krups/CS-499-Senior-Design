@@ -14,7 +14,7 @@ public:
     Data(const Data &x);
     int getType();
     int getNumVals();
-    u_int16_t getTimeStamp();
+    u_int32_t getTimeStamp();
     std::vector<u_int16_t> getData();
     void printData();
     friend std::ostream &operator<<(std::ostream &out, const Data &x);
@@ -22,6 +22,6 @@ public:
 private:
     int type;
     int num_vals;
-    u_int16_t time_stamp;
+    u_int32_t time_stamp;
     std::vector<u_int16_t> data;
 };
