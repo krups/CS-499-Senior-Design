@@ -111,13 +111,13 @@ void * IOThread (void * arguments) {
     if ((fd = serialOpen(SERIAL_FEATHER, 115200)) < 0)
     {
         fprintf(stderr, "Unable to open serial device: %s\n", strerror(errno));
-        pthread_exit(1);
+        exit(1);
     }
     printf("Connected to %s!\n", SERIAL_FEATHER);
     if (wiringPiSetup() == -1)
     {
         fprintf(stdout, "Unable to start wiringPi: %s\n", strerror(errno));
-        pthread_exit(1);
+        exit(1);
     }
     printf("wiringPi set up!\n");
     printf("Listening for serial!\n");
