@@ -10,5 +10,5 @@ kaps:
 cleanData:
 	rm -rf ./data/*
 
-clean: cleanData
+clean: 
 	rm -f $(GOAL) a.out
