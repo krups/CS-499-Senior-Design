@@ -17,7 +17,7 @@ Data::Data(char *line)
         ptr = strtok(NULL, " , ");
     }
     type = atoi(tokens[0]);
-    time_stamp = (u_int16_t)atoi(tokens[1]);
+    time_stamp = (u_int32_t)atoi(tokens[1]);
     num_vals = atoi(tokens[2]);
     for (int i = 3; i < num_vals + 3; i++)
     {
@@ -63,7 +63,7 @@ int Data::getNumVals()
  *
  * @return u_int16_t
  */
-u_int16_t Data::getTimeStamp()
+u_int32_t Data::getTimeStamp()
 {
     return time_stamp;
 }

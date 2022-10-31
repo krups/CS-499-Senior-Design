@@ -6,6 +6,9 @@
 
 SensorList sensors;
 
+// Maximum packet size in bytes
+#define PACKET_SIZE 340
+
 // Serial port which interfaces with Feather M4 Express
 #define SERIAL_FEATHER "/dev/ttyS1"
 
@@ -13,8 +16,7 @@ SensorList sensors;
 #define MAX_CHARS 256
 
 // Sensor ID Config
-
-const std::string sensorDataPath = "./data/"; // This directory must exist before running the program
+const std::string SENSOR_DATA_PATH = "./data/"; // This directory must exist before running the program
 
 #define THERMOCOUPLE 1
 #define SPECTROMETER 2
@@ -33,16 +35,12 @@ sensors.addSensor(ACCELEROMETER, 1);
 
 #define DEBUG // comment/uncomment to enable/disable debugging logs
 #ifdef DEBUG
-// add toggles for feature debugging
-
-// Prints data being received
-// #define PRINT_DATA
+// #define PRINT_DATA 
 #define VALIDITY
 #endif
 
 // Validity parameters
 // Check for erroneous data 
-
 #define TC_LOW -1000
 #define TC_MAX 10000
 

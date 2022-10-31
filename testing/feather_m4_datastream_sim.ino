@@ -30,7 +30,7 @@ void printACC()
     int values[n];
     for (int j = 0; j < n; j++)
     {
-        values[j] = random() % 20;
+        values[j] = (random() % 150);
     }
     Serial1.print(ACC_SERIAL);
     Serial1.print(',');

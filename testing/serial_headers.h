@@ -6,28 +6,28 @@
 ///////////////////////////
 
 // Spectrometers
-#define SPECTROMETER_1_SERIAL 0x101
+#define SPECTROMETER_1_SERIAL 0xA
 // #define SPECTROMETER_2_SERIAL 0x102
 
 // TCs 
-#define TC_SERIAL 0x201
+#define TC_SERIAL 0x1
 
 // IMU
-#define IMU_SERIAL 0x301
+#define IMU_SERIAL 0x2
 
 // GPS/RMC
-#define GPS_SERIAL 0x401
-#define RMC_SERIAL 0x402
+#define GPS_SERIAL 0x3
+#define RMC_SERIAL 0x4
 
 // ACC
-#define ACC_SERIAL 0x501
+#define ACC_SERIAL 0x5
 
 ///////////////////////////
 //    Command Headers 
 ///////////////////////////
 
 // Packet Request from Feather M4
-#define PACKET_REQUEST 0x801
+#define PACKET_REQUEST 0x8
 
 
 ///////////////////////////
@@ -35,6 +35,6 @@
 ///////////////////////////
 
 // Misc debug
-#define MISC_SERIAL 0x999
+#define MISC_SERIAL 0x9
 
 #endif
