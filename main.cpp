@@ -192,10 +192,10 @@ int main()
     SensorList sensors;
 
     // Active Sensors
-    // Entries should be formatted: FIGURE THIS OUT
-    sensors.addSensor(THERMOCOUPLE, 1);
-    sensors.addSensor(SPECTROMETER, 1);
-    sensors.addSensor(ACCELEROMETER, 1);
+    // Entries should be formatted: sensor_id, sensor_priority, num_bytes
+    sensors.addSensor(THERMOCOUPLE, 1, 5);
+    sensors.addSensor(SPECTROMETER, 1, 6);
+    sensors.addSensor(ACCELEROMETER, 1, 3);
 
     // Start semaphores
     if (sem_init(&packetSem, 0, 1) != 0)
