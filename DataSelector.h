@@ -6,6 +6,8 @@
 
 class DataSelector {
   public:
+    // DataSelector();
+    // ~DataSelector();
     std::vector<DataPoint*> selectData();
 
     void markUsed(std::vector<DataPoint*> points);
