@@ -18,6 +18,14 @@ char packetBuffer[PACKET_SIZE];
 sem_t packetSem;
 sem_t sensor1Sem;
 
+SensorList sensors;
+
+// Active Sensors
+// Entries should be formatted: FIGURE THIS OUT
+sensors.addSensor(THERMOCOUPLE, 1);
+sensors.addSensor(SPECTROMETER, 1);
+sensors.addSensor(ACCELEROMETER, 1);
+
 void saveData(Data data)
 {
 #ifdef PRINT_DATA
