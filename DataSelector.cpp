@@ -1,15 +1,50 @@
 #include "DataSelector.h"
 
 void DataSelector::updateDataPoints() {
-  for (unsigned int sensorId = 0; sensorId < sensors.list.size(); sensorId++) {
-    Sensor* currentSensor = &sensors.list[sensorId];
+  for (unsigned int sensorIndex = 0; sensorIndex < sensors.list.size(); sensorIndex++) {
+    Sensor* currentSensor = &sensors.list[sensorIndex];
 
-    // go to last data point used, open file, go to that line, see if it continues, if it does add data point info until end
+    std::ifstream sensorFile;
+    std::string path = sensorDataPath;
+    path += std::to_string(currentSensor->id);
+
+    // SEMAPHORE WAIT
+
+    sensorFile.open(path, std::ios_base::binary);
+    if (!sensorFile.fail()) {
+      std::string row;
+
+      if (dataPoints[currentSensor->id].size() != 0) {
+        sensorFile.seekg(dataPoints[currentSensor->id][dataPoints[currentSensor->id].size() - 1].fileIndex, std::ios_base::binary);
+        getline(sensorFile, row);
+      }
+      
+      while (!sensorFile.eof()) {
+        DataPoint newDataPoint;
+        newDataPoint.sensor_id = currentSensor->id;
+        newDataPoint.numIncludes = 0;
+        newDataPoint.fileIndex = sensorFile.tellg();
+
+        getline(sensorFile, row);
+
+        newDataPoint.timestamp = (uint16_t) *(row.c_str() + sizeof(sensor_id_t));
+
+        dataPoints[currentSensor->id].push_back(newDataPoint);
+      }
+    }
+
+    sensorFile.close();
+
+    // SEMAPHORE SIGNAL
   }
 }
 
 std::vector<DataPoint*> DataSelector::selectData() {
   updateDataPoints();
+
+  if (currentData.size() != 0) {
+    previousData = currentData;
+  }
 
   unsigned int totalPriority = 0;
 
@@ -20,33 +55,60 @@ std::vector<DataPoint*> DataSelector::selectData() {
   std::unordered_map<sensor_id_t, std::vector<DataPoint*>> tempDataPointList;
   std::vector<DataPoint*> dataPointList;
 
-  for (unsigned int sensorId = 0; sensorId < sensors.list.size(); sensorId++) {
-    Sensor* currentSensor = &sensors.list[sensorId];
+  unsigned int sensorIndex;
+  for (sensorIndex = 0; sensorIndex < sensors.list.size(); sensorIndex++) {
+    Sensor* currentSensor = &sensors.list[sensorIndex];
 
     unsigned int targetByteCount = BYTE_TARGET * (currentSensor->priority / totalPriority);
 
     unsigned int numDataPoints = targetByteCount / currentSensor->numBytes;
 
-    unsigned int numNewDataPoints = numDataPoints * NEW_DATA_RATIO;
-    unsigned int newDataPointSpacing = (dataPoints[currentSensor->id].size() - lastDataPointUsedIndex[currentSensor->id]) / numNewDataPoints;
-    for (unsigned int dataPointIndex = lastDataPointUsedIndex[currentSensor->id] + newDataPointSpacing; dataPointIndex += newDataPointSpacing; dataPointIndex < dataPoints[currentSensor->id].size()) {
+    unsigned int numNewData = numDataPoints * NEW_DATA_RATIO;
+    unsigned int newDataSpacing = (dataPoints[currentSensor->id].size() - lastDataPointUsedIndex[currentSensor->id]) / numNewData;
+    for (unsigned int dataPointIndex = lastDataPointUsedIndex[currentSensor->id] + newDataSpacing; dataPointIndex += newDataSpacing; dataPointIndex < dataPoints[currentSensor->id].size()) {
       tempDataPointList[currentSensor->id].push_back(&dataPoints[currentSensor->id][dataPointIndex]);
     }
 
-    unsigned int numOldDataPoints = numDataPoints - numNewDataPoints;
-    unsigned int oldDataPointSpacing = lastDataPointUsedIndex[currentSensor->id] / numNewDataPoints;
-    for (unsigned int dataPointIndex = 0; dataPointIndex += oldDataPointSpacing; dataPointIndex < lastDataPointUsedIndex[currentSensor->id]) {
+    unsigned int numOldData = numDataPoints - numNewData;
+    unsigned int oldDataSpacing = lastDataPointUsedIndex[currentSensor->id] / numNewData;
+    for (unsigned int dataPointIndex = 0; dataPointIndex += oldDataSpacing; dataPointIndex < lastDataPointUsedIndex[currentSensor->id]) {
       tempDataPointList[currentSensor->id].push_back(&dataPoints[currentSensor->id][dataPointIndex]);
     }
   }
 
-  // INTERLEAVE ALL OF THE TEMP VECTORS INTO MAIN VECTOR
+  std::unordered_map<sensor_id_t, unsigned int> nextPointPerSensor;
+  for (sensorIndex = 0; sensorIndex < sensors.list.size(); sensorIndex++) {
+    Sensor* currentSensor = &sensors.list[sensorIndex];
+
+    nextPointPerSensor[currentSensor->id] = 0;
+  }
+
+  sensorIndex = 0;
+  bool moreData = true;
+  while (moreData) {
+    moreData = false;
+
+    for (sensorIndex = 0; sensorIndex < sensors.list.size(); sensorIndex++) {
+      Sensor* currentSensor = &sensors.list[sensorIndex];
+
+      unsigned int pointNum = 0;
+      while (pointNum < currentSensor->priority && nextPointPerSensor[currentSensor->id] < tempDataPointList[currentSensor->id].size()) {
+        dataPointList.push_back(tempDataPointList[currentSensor->id][nextPointPerSensor[currentSensor->id]]);
+        nextPointPerSensor[currentSensor->id] += 1;
+        pointNum++;
+      }
+
+      if (nextPointPerSensor[currentSensor->id] < tempDataPointList[currentSensor->id].size()) {
+        moreData = true;
+      }
+    }
+  }
 
   return dataPointList;
 }
 
-void DataSelector::markDataPoints(std::vector<DataPoint*> points) {
-  // for each data point in the given vector, increment the numIncludes by 1 and then remove from list if used more than config value
+void DataSelector::markUsed() {
+  // for each data point in the previousData vector, increment the numIncludes by 1 and then remove from list if used more than config value
 
   // update lastDataPointUsedIndex to reflect changes
 }
