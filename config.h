@@ -4,8 +4,6 @@
 #include <string>
 #include "Sensors.h"
 
-SensorList sensors;
-
 // Maximum packet size in bytes
 #define PACKET_SIZE 340
 
@@ -21,12 +19,6 @@ const std::string SENSOR_DATA_PATH = "./data/"; // This directory must exist bef
 #define THERMOCOUPLE 1
 #define SPECTROMETER 2
 #define ACCELEROMETER 3
-
-// Active Sensors
-// Entries should be formatted: FIGURE THIS OUT
-sensors.addSensor(THERMOCOUPLE, 1);
-sensors.addSensor(SPECTROMETER, 1);
-sensors.addSensor(ACCELEROMETER, 1);
 
 // Data Selection Config
 #define BYTE_TARGET 500
