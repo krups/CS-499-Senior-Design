@@ -13,8 +13,11 @@
 #include "config.h"
 #include "data.h"
 #include "serial_headers.h"
+#include "DataSelector.h"
+#include "DataPoint.h"
 
 char packetBuffer[PACKET_SIZE];
+bool dataUsed = false;
 sem_t packetSem;
 sem_t sensor1Sem;
 
@@ -80,29 +83,48 @@ bool checkValid(Data data)
 
 void *PackagingThread(void *arguments)
 {
+    DataSelector dataSelector;
+    std::vector<DataPoint*> dataList;
+    std::vector<DataPoint*> oldData;
+    std::ifstream sensorFile;
+    
     while (true)
     {
-        // File path of sensor data file
-        std::string path = SENSOR_DATA_PATH;
-        path += "favWord"; // TODO: path to desired sensor
+        std::string packet;
 
-        // Read the sensor data file
-        std::string data;
-        sem_wait(&sensor1Sem);
-        std::ifstream sensorDataFile(path);
-        if (sensorDataFile.is_open())
-        {
-            getline(sensorDataFile, data);
-            sensorDataFile.close();
+        // Select data
+        dataList = dataSelector.selectData();
+
+        // Read each data point from sensor file
+        for (DataPoint* dataInfo : dataList) {
+            sem_wait(&sensor1Sem);
+            sensorFile.open(SENSOR_DATA_PATH + "/" + dataInfo->sensor_id);
+
+            if (sensorDataFile.is_open()){
+                sensorFile.seekg(dataInfo->fileIndex);
+                getline(sensorFile, data);
+                packet += data;
+                sensorFile.close()
+            }
+            else {
+                cout << "ERROR: could not open " << SENSOR_DATA_PATH << "/" << dataInfo->sensor_id << endl;
+            }
+
+            sem_post(&sensor1Sem);
         }
-        sem_post(&sensor1Sem);
 
-        // Write line to packet buffer
         sem_wait(&packetSem);
-        for (int j = 0; j < (int)data.size(); j++)
-        {
-            packetBuffer[j] = data[j];
+
+        // Check if previous packet was used
+        if (dataUsed) {
+            dataSelector.markUsed(oldData);  // does this take parameters?
+            dataUsed = false;
         }
+
+        // Put the new packet in the buffer
+        packetBuffer = packet;
+        oldData = dataList;  // keep track of what data is in it
+
         sem_post(&packetSem);
     } // end while(true)
 
