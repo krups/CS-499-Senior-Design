@@ -21,6 +21,7 @@ const std::string sensorDataPath = "./data/"; // This directory must exist befor
 #define ACCELEROMETER 3
 
 // Active Sensors
+// Entries should be formatted: FIGURE THIS OUT
 sensors.addSensor(THERMOCOUPLE, 1);
 sensors.addSensor(SPECTROMETER, 1);
 sensors.addSensor(ACCELEROMETER, 1);
@@ -29,8 +30,6 @@ sensors.addSensor(ACCELEROMETER, 1);
 #define BYTE_TARGET 500
 #define NEW_DATA_RATIO 0.8
 #define POINT_INCLUDE_LIMIT 1
-
-// Somehow have a way to indicate which sensors are used and priorities
 
 #define DEBUG // comment/uncomment to enable/disable debugging logs
 #ifdef DEBUG
