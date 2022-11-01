@@ -6,18 +6,19 @@
 
 class DataSelector {
   public:
-    // DataSelector();
-    // ~DataSelector();
-    std::vector<DataPoint*> selectData();
-
-    void markUsed(std::vector<DataPoint*> points);
+    DataSelector();
+    ~DataSelector();
+    std::vector<DataPoint*>* selectData();
+    void markUsed();
 
   private:
     void updateDataPoints();
-    std::vector<DataPoint*> currentData;
-    std::vector<DataPoint*> previousData;
 
-    std::unordered_map<sensor_id_t, std::vector<DataPoint>> dataPoints;
+    unsigned int totalSensorPriority;
+    std::vector<DataPoint*>* currentData;
+    std::vector<DataPoint*>* previousData;
+
+    std::unordered_map<sensor_id_t, std::vector<DataPoint>*> dataPoints;
     std::unordered_map<sensor_id_t, unsigned int> lastDataPointUsedIndex;
 
 };
