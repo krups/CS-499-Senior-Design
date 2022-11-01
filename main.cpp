@@ -93,7 +93,7 @@ void *PackagingThread(void *arguments)
         std::string packet;
 
         // Select data
-        dataList = dataSelector.selectData();
+        dataList = *dataSelector.selectData();
 
         // Read each data point from sensor file
         for (DataPoint* dataInfo : dataList) {
