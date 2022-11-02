@@ -28,7 +28,8 @@ const std::string SENSOR_DATA_PATH = "./data/"; // This directory must exist bef
 #define DEBUG // comment/uncomment to enable/disable debugging logs
 #ifdef DEBUG
 // #define PRINT_DATA 
-#define VALIDITY
+#define PACKET_P
+#define VALIDITY_P
 #endif
 
 // Validity parameters

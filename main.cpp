@@ -13,10 +13,14 @@
 #include "config.h"
 #include "data.h"
 #include "serial_headers.h"
+#include "DataSelector.h"
 
 char packetBuffer[PACKET_SIZE];
+bool dataUsed = false;
 sem_t packetSem;
 sem_t sensor1Sem;
+
+SensorList sensors;
 
 void saveData(Data data)
 {
@@ -51,7 +55,7 @@ bool checkValid(Data data)
         // Check for valid numbers
         if (points[i] == NAN)
         {
-#ifdef VALIDITY
+#ifdef VALIDITY_P
             printf("Error %u: Validity check failed! with '%d is NAN'!\n", data.getTimeStamp(), i);
 #endif
             return false;
@@ -60,7 +64,7 @@ bool checkValid(Data data)
         // TC Validity Check
         if (data.getType() == TC_SERIAL && (points[i] < TC_LOW || points[i] > TC_MAX))
         {
-#ifdef VALIDITY
+#ifdef VALIDITY_P
             printf("Error %u: TC validity check failed with '%d = %u'!\n", data.getTimeStamp(), i, points[i]);
 #endif
             return false;
@@ -69,7 +73,7 @@ bool checkValid(Data data)
         // ACC Validity Check
         if (data.getType() == ACC_SERIAL && (points[i] < ACC_LOW || points[i] > ACC_HIGH))
         {
-#ifdef VALIDITY
+#ifdef VALIDITY_P
             printf("Error %u: ACC validity check failed with '%d = %u'!\n", data.getTimeStamp(), i, points[i]);
 #endif
             return false;
@@ -80,29 +84,56 @@ bool checkValid(Data data)
 
 void *PackagingThread(void *arguments)
 {
+    DataSelector dataSelector(&sensors);
+    std::vector<DataPoint *> dataList;
+    std::ifstream sensorFile;
+    std::string data;
+
     while (true)
     {
-        // File path of sensor data file
-        std::string path = SENSOR_DATA_PATH;
-        path += "favWord"; // TODO: path to desired sensor
+        std::string packet;
 
-        // Read the sensor data file
-        std::string data;
-        sem_wait(&sensor1Sem);
-        std::ifstream sensorDataFile(path);
-        if (sensorDataFile.is_open())
+        // Select data
+        dataList = *dataSelector.selectData();
+
+        // Read each data point from sensor file
+        for (DataPoint *dataInfo : dataList)
         {
-            getline(sensorDataFile, data);
-            sensorDataFile.close();
-        }
-        sem_post(&sensor1Sem);
+            sem_wait(&sensor1Sem);
 
-        // Write line to packet buffer
+            std::string path = SENSOR_DATA_PATH;
+            path += std::to_string(dataInfo->sensor_id);
+            sensorFile.open(path, std::ios_base::binary);
+
+            if (sensorFile.is_open())
+            {
+                sensorFile.seekg(dataInfo->fileIndex);
+                getline(sensorFile, data);
+                packet += data;
+                sensorFile.close();
+            }
+            else
+            {
+                std::cout << "ERROR: could not open " << path << std::endl;
+            }
+
+            sem_post(&sensor1Sem);
+        }
+
         sem_wait(&packetSem);
-        for (int j = 0; j < (int)data.size(); j++)
+
+        // Check if previous packet was used
+        if (dataUsed)
         {
-            packetBuffer[j] = data[j];
+            dataSelector.markUsed(); // does this take parameters?
+            dataUsed = false;
         }
+
+        // Put the new packet in the buffer
+        strncpy(packetBuffer, packet.c_str(), PACKET_SIZE);
+#ifdef PACKET_P
+        printf("Generated packet: %s\n", packetBuffer);
+#endif
         sem_post(&packetSem);
     } // end while(true)
 
@@ -189,8 +220,6 @@ void *IOThread(void *arguments)
 
 int main()
 {
-    SensorList sensors;
-
     // Active Sensors
     // Entries should be formatted: sensor_id, sensor_priority, num_bytes
     sensors.addSensor(THERMOCOUPLE, 1, 5);
