@@ -83,7 +83,7 @@ bool checkValid(Data data)
 
 void *PackagingThread(void *arguments)
 {
-    DataSelector dataSelector;
+    DataSelector dataSelector(arguments[0]);
     std::vector<DataPoint*> dataList;
     std::ifstream sensorFile;
     std::string data;
@@ -107,7 +107,7 @@ void *PackagingThread(void *arguments)
                 sensorFile.close();
             }
             else {
-                cout << "ERROR: could not open " << SENSOR_DATA_PATH << "/" << dataInfo->sensor_id << endl;
+                std::cout << "ERROR: could not open " << SENSOR_DATA_PATH << "/" << dataInfo->sensor_id << std::endl;
             }
 
             sem_post(&sensor1Sem);
@@ -232,6 +232,6 @@ int main()
     // Start threads
     pthread_t thread1, thread2;
     pthread_create(&thread1, NULL, IOThread, NULL);
-    pthread_create(&thread2, NULL, PackagingThread, NULL);
+    pthread_create(&thread2, NULL, PackagingThread, (void *)sensors);
     pthread_exit(0);
 } // end main
