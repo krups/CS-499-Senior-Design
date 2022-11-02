@@ -1,12 +1,12 @@
 #include <vector>
 #include <unordered_map>
-#include <ifstream>
+#include <fstream>
 #include "config.h"
 #include "DataPoint.h"
 
 class DataSelector {
   public:
-    DataSelector();
+    DataSelector(SensorList* sensors);
     ~DataSelector();
     std::vector<DataPoint*>* selectData();
     void markUsed();
@@ -15,6 +15,8 @@ class DataSelector {
     void updateDataPoints();
 
     unsigned int totalSensorPriority;
+    SensorList* sensorsList;
+    unsigned int sensorListSize;
     std::vector<DataPoint*>* currentData;
     std::vector<DataPoint*>* previousData;
 
