@@ -5,7 +5,7 @@ run: $(GOAL)
 	sudo ./$(GOAL)
 
 kaps:
-	g++ -o $(GOAL) main.cpp data.cpp $(FLAGS)
+	g++ -o $(GOAL) main.cpp data.cpp DataSelector.cpp $(FLAGS)
 
 cleanData:
 	rm -rf ./data/*

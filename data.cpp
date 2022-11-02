@@ -93,9 +93,9 @@ void Data::printData()
 
 std::ostream &operator<<(std::ostream &out, const Data &x)
 {
-    out << x.type << "," << x.time_stamp << "," << x.num_vals;
+    out << x.type << "," << x.time_stamp << "," << x.num_vals << ",";
     for (auto y : x.data) {
-        out << "," << y;
+        out << y << ",";
     }
     out << "\n";
     return out;
