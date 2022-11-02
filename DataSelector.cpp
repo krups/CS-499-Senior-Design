@@ -1,22 +1,23 @@
 #include "DataSelector.h"
 
-DataSelector::DataSelector() {
+DataSelector::DataSelector(SensorList* sensors) {
   // Allocate memory and set initial variable values
   totalSensorPriority = 0;
 
-  unsigned int sensorListSize = sensors.list.size();
+  sensorsList = sensors;
+  sensorListSize = sensors->list.size();
+
   for (unsigned int index = 0; index < sensorListSize; index++) {
-    dataPoints[sensors.list[index].id] = new std::vector<DataPoint>;
-    lastDataPointUsedIndex[sensors.list[index].id] = 0;
-    totalSensorPriority += sensors.list[index].priority;
+    dataPoints[sensors->list[index].id] = new std::vector<DataPoint>;
+    lastDataPointUsedIndex[sensors->list[index].id] = 0;
+    totalSensorPriority += sensors->list[index].priority;
   }
 }
 
 DataSelector::~DataSelector() {
   // Deallocate allocated memory
-  unsigned int sensorListSize = sensors.list.size();
   for (unsigned int index = 0; index < sensorListSize; index++) {
-    free(dataPoints[sensors.list[index]]);
+    free(dataPoints[sensorsList->list[index].id]);
   }
 
   if (currentData != nullptr) {
@@ -31,8 +32,8 @@ DataSelector::~DataSelector() {
 // Used to update the values stored in dataPoints
 void DataSelector::updateDataPoints() {
   // For each sensor
-  for (unsigned int sensorIndex = 0; sensorIndex < sensors.list.size(); sensorIndex++) {
-    Sensor* currentSensor = &sensors.list[sensorIndex];
+  for (unsigned int sensorIndex = 0; sensorIndex < sensorsList->list.size(); sensorIndex++) {
+    Sensor* currentSensor = &sensorsList->list[sensorIndex];
 
     // Get the path to the file that stores that sensor's data
     std::ifstream sensorFile;
@@ -81,12 +82,12 @@ void DataSelector::updateDataPoints() {
 }
 
 // Called by the packet building thread to select data points to include in the nexxt packet
-std::vector<DataPoint*> DataSelector::selectData() {
+std::vector<DataPoint*>* DataSelector::selectData() {
   // First, update the vectors of data points that are tracked in memory and used for data selection
   updateDataPoints();
 
   // If there was packet made by a previous call, move it to the variable for tracking previous calls
-  if (!currentData.empty()) {
+  if (!(*currentData).empty()) {
     free(previousData);
     previousData = currentData;
   }
@@ -96,14 +97,13 @@ std::vector<DataPoint*> DataSelector::selectData() {
   
   // Initialize the unordered map's vectors
   unsigned int sensorIndex;
-  unsigned int sensorListSize = sensors.list.size();
   for (sensorIndex = 0; sensorIndex < sensorListSize; sensorIndex++) {
-    tempDataPointList[sensors.list[sensorIndex]] = new std::vector<DataPoint*>;
+    tempDataPointList[sensorsList->list[sensorIndex].id] = new std::vector<DataPoint*>;
   }
 
   // For every sensor
   for (sensorIndex = 0; sensorIndex < sensorListSize; sensorIndex++) {
-    Sensor* currentSensor = &sensors.list[sensorIndex];
+    Sensor* currentSensor = &sensorsList->list[sensorIndex];
 
     // Calculate the number of bytes allocated for this sensor's data
     unsigned int targetByteCount = BYTE_TARGET * (currentSensor->priority / totalSensorPriority);
@@ -114,8 +114,8 @@ std::vector<DataPoint*> DataSelector::selectData() {
     // Find out how many of these data points will be old data
     unsigned int numOldData = numDataPoints * (1 - NEW_DATA_RATIO);
     // Calculate the index increment to allow that number of data points to be evenly spaced across time (from the first recorded data point to the last used data point)
-    unsigned int oldDataSpacing = lastDataPointUsedIndex[currentSensor->id] / numNewData;
-    oldDataSpacing = std::max(1, oldDataSpacing);
+    unsigned int oldDataSpacing = lastDataPointUsedIndex[currentSensor->id] / numOldData;
+    oldDataSpacing = std::max((unsigned int) 1, oldDataSpacing);
     // Iterate through the old data points using the calculated increment and add them to the temporary vector
     for (unsigned int dataPointIndex = 0; dataPointIndex < lastDataPointUsedIndex[currentSensor->id]; dataPointIndex += oldDataSpacing) {
       tempDataPointList[currentSensor->id]->push_back(&(*dataPoints[currentSensor->id])[dataPointIndex]);
@@ -125,7 +125,7 @@ std::vector<DataPoint*> DataSelector::selectData() {
     unsigned int numNewData = numDataPoints * NEW_DATA_RATIO;
     // Calculate the index increment to allow that number of data points to be evenly spaced across time (from the last used data point to the last recorded data point)
     unsigned int newDataSpacing = (dataPoints[currentSensor->id]->size() - lastDataPointUsedIndex[currentSensor->id]) / numNewData;
-    newDataSpacing = std::max(1, newDataSpacing);
+    newDataSpacing = std::max((unsigned int) 1, newDataSpacing);
     // Iterate through the new data points using the calculated increment and add them to the temporary vector
     unsigned int sensorDataSize = dataPoints[currentSensor->id]->size();
     for (unsigned int dataPointIndex = lastDataPointUsedIndex[currentSensor->id] + newDataSpacing; dataPointIndex < sensorDataSize; dataPointIndex += newDataSpacing) {
@@ -137,7 +137,7 @@ std::vector<DataPoint*> DataSelector::selectData() {
   std::unordered_map<sensor_id_t, unsigned int> nextPointPerSensor;
   for (sensorIndex = 0; sensorIndex < sensorListSize; sensorIndex++) {
     // Initialize the value to 0
-    nextPointPerSensor[sensors.list[sensorIndex].id] = 0;
+    nextPointPerSensor[sensorsList->list[sensorIndex].id] = 0;
   }
 
   // Create the vector of sensor data that is returned
@@ -154,7 +154,7 @@ std::vector<DataPoint*> DataSelector::selectData() {
 
     // For each sensor
     for (sensorIndex = 0; sensorIndex < sensorListSize; sensorIndex++) {
-      Sensor* currentSensor = &sensors.list[sensorIndex];
+      Sensor* currentSensor = &sensorsList->list[sensorIndex];
 
       // Until a number of data points equal to the sensor's priority have been added to the returned vector
       // or until the sensor has no more data points left to add
@@ -178,7 +178,7 @@ std::vector<DataPoint*> DataSelector::selectData() {
 
   // Free allocated memory for temporary data point vectors for each sensor
   for (sensorIndex = 0; sensorIndex < sensorListSize; sensorIndex++) {
-    free(tempDataPointList[sensors.list[sensorIndex]]);
+    free(tempDataPointList[sensorsList->list[sensorIndex].id]);
   }
 
   // Track the currently generated list of data points
@@ -191,9 +191,9 @@ std::vector<DataPoint*> DataSelector::selectData() {
 // Called by the packet building thread to indicate that the previous list of data points was used
 void DataSelector::markUsed() {
   // For each data point in the previous list of data points
-  unsigned int previousDataSize = previousData.size();
+  unsigned int previousDataSize = previousData->size();
   for (unsigned int previousDataIndex = 0; previousDataIndex < previousDataSize; previousDataIndex++) {
-    DataPoint* targetDataPoint = previousData[previousDataIndex];
+    DataPoint* targetDataPoint = (*previousData)[previousDataIndex];
 
     // Increment the number of times that this data point has been used
     targetDataPoint->numIncludes++;
@@ -201,14 +201,14 @@ void DataSelector::markUsed() {
     // If the number of times that this data point has been used exceeds the configured limit
     if (targetDataPoint->numIncludes > POINT_INCLUDE_LIMIT) {
       // Loop through the vector of data points for the sensor that this data point is associated with to find the index of that data point
-      unsigned int sensorDataSize = dataPoints[targetDataPoint->sensor_id].size();
+      unsigned int sensorDataSize = dataPoints[targetDataPoint->sensor_id]->size();
       for (unsigned int sensorDataIndex; sensorDataIndex < sensorDataSize; sensorDataIndex++) {
         // If the pointers match, then the object has been found
-        if (&(dataPoints[targetDataPoint->sensor_id][sensorDataIndex]) == targetDataPoint) {
+        if ((int) &(dataPoints[targetDataPoint->sensor_id][sensorDataIndex]) == (int) targetDataPoint) {
           // Use the index that was counted while searching to remove the item from the vector of data points for that sensor
-          std::vector<DataPoint>::iterator sensorDataIterator = vec.begin();
+          std::vector<DataPoint>::iterator sensorDataIterator = dataPoints[targetDataPoint->sensor_id]->begin();
           std::advance(sensorDataIterator, sensorDataIndex);
-          dataPoints[targetDataPoint->sensor_id].erase(sensorDataIterator);
+          dataPoints[targetDataPoint->sensor_id]->erase(sensorDataIterator);
 
           // If the index of the removed point was greater than the last used data point from this sensor
           if (sensorDataIndex > lastDataPointUsedIndex[targetDataPoint->sensor_id]) {
