@@ -204,7 +204,7 @@ void DataSelector::markUsed() {
       unsigned int sensorDataSize = dataPoints[targetDataPoint->sensor_id]->size();
       for (unsigned int sensorDataIndex; sensorDataIndex < sensorDataSize; sensorDataIndex++) {
         // If the pointers match, then the object has been found
-        if ((int) &(dataPoints[targetDataPoint->sensor_id][sensorDataIndex]) == (int) targetDataPoint) {
+        if ((void*) &((*dataPoints[targetDataPoint->sensor_id])[sensorDataIndex]) == (void*) targetDataPoint) {
           // Use the index that was counted while searching to remove the item from the vector of data points for that sensor
           std::vector<DataPoint>::iterator sensorDataIterator = dataPoints[targetDataPoint->sensor_id]->begin();
           std::advance(sensorDataIterator, sensorDataIndex);
