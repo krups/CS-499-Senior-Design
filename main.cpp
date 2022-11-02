@@ -84,7 +84,6 @@ bool checkValid(Data data)
 
 void *PackagingThread(void *arguments)
 {
-    printf("constructor\n");
     DataSelector dataSelector(&sensors);
     std::vector<DataPoint *> dataList;
     std::ifstream sensorFile;
@@ -95,9 +94,7 @@ void *PackagingThread(void *arguments)
         std::string packet;
 
         // Select data
-        printf("selectData()\n");
         dataList = *dataSelector.selectData();
-        printf("post selectData()\n");
 
         // Read each data point from sensor file
         for (DataPoint *dataInfo : dataList)
@@ -122,14 +119,12 @@ void *PackagingThread(void *arguments)
 
             sem_post(&sensor1Sem);
         }
-        printf("post post selectData()\n");
 
         sem_wait(&packetSem);
 
         // Check if previous packet was used
         if (dataUsed)
         {
-            printf("markUsed()\n");
             dataSelector.markUsed(); // does this take parameters?
             dataUsed = false;
         }
