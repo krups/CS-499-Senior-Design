@@ -86,6 +86,7 @@ void *PackagingThread(void *arguments)
     DataSelector dataSelector;
     std::vector<DataPoint*> dataList;
     std::ifstream sensorFile;
+    std::string data;
     
     while (true)
     {
@@ -97,13 +98,13 @@ void *PackagingThread(void *arguments)
         // Read each data point from sensor file
         for (DataPoint* dataInfo : dataList) {
             sem_wait(&sensor1Sem);
-            sensorFile.open(SENSOR_DATA_PATH + "/" + dataInfo->sensor_id);
+            sensorFile.open(SENSOR_DATA_PATH + "/" + dataInfo->sensor_id, std::ios_base::binary);
 
             if (sensorDataFile.is_open()){
                 sensorFile.seekg(dataInfo->fileIndex);
                 getline(sensorFile, data);
                 packet += data;
-                sensorFile.close()
+                sensorFile.close();
             }
             else {
                 cout << "ERROR: could not open " << SENSOR_DATA_PATH << "/" << dataInfo->sensor_id << endl;
@@ -121,7 +122,7 @@ void *PackagingThread(void *arguments)
         }
 
         // Put the new packet in the buffer
-        packetBuffer = packet;
+        strncpy(packetBuffer, packet.c_str(), PACKET_SIZE);
 
         sem_post(&packetSem);
     } // end while(true)
