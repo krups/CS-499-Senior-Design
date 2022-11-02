@@ -14,12 +14,13 @@
 #include "data.h"
 #include "serial_headers.h"
 #include "DataSelector.h"
-#include "DataPoint.h"
 
 char packetBuffer[PACKET_SIZE];
 bool dataUsed = false;
 sem_t packetSem;
 sem_t sensor1Sem;
+
+SensorList sensors;
 
 void saveData(Data data)
 {
@@ -83,41 +84,53 @@ bool checkValid(Data data)
 
 void *PackagingThread(void *arguments)
 {
-    DataSelector dataSelector(arguments[0]);
-    std::vector<DataPoint*> dataList;
+    printf("constructor\n");
+    DataSelector dataSelector(&sensors);
+    std::vector<DataPoint *> dataList;
     std::ifstream sensorFile;
     std::string data;
-    
+
     while (true)
     {
         std::string packet;
 
         // Select data
+        printf("selectData()\n");
         dataList = *dataSelector.selectData();
+        printf("post selectData()\n");
 
         // Read each data point from sensor file
-        for (DataPoint* dataInfo : dataList) {
+        for (DataPoint *dataInfo : dataList)
+        {
             sem_wait(&sensor1Sem);
-            sensorFile.open(SENSOR_DATA_PATH + "/" + dataInfo->sensor_id, std::ios_base::binary);
 
-            if (sensorDataFile.is_open()){
+            std::string path = SENSOR_DATA_PATH;
+            path += std::to_string(dataInfo->sensor_id);
+            sensorFile.open(path, std::ios_base::binary);
+
+            if (sensorFile.is_open())
+            {
                 sensorFile.seekg(dataInfo->fileIndex);
                 getline(sensorFile, data);
                 packet += data;
                 sensorFile.close();
             }
-            else {
-                std::cout << "ERROR: could not open " << SENSOR_DATA_PATH << "/" << dataInfo->sensor_id << std::endl;
+            else
+            {
+                std::cout << "ERROR: could not open " << path << std::endl;
             }
 
             sem_post(&sensor1Sem);
         }
+        printf("post post selectData()\n");
 
         sem_wait(&packetSem);
 
         // Check if previous packet was used
-        if (dataUsed) {
-            dataSelector.markUsed();  // does this take parameters?
+        if (dataUsed)
+        {
+            printf("markUsed()\n");
+            dataSelector.markUsed(); // does this take parameters?
             dataUsed = false;
         }
 
@@ -210,8 +223,6 @@ void *IOThread(void *arguments)
 
 int main()
 {
-    SensorList sensors;
-
     // Active Sensors
     // Entries should be formatted: sensor_id, sensor_priority, num_bytes
     sensors.addSensor(THERMOCOUPLE, 1, 5);
@@ -232,6 +243,6 @@ int main()
     // Start threads
     pthread_t thread1, thread2;
     pthread_create(&thread1, NULL, IOThread, NULL);
-    pthread_create(&thread2, NULL, PackagingThread, (void *)sensors);
+    pthread_create(&thread2, NULL, PackagingThread, NULL);
     pthread_exit(0);
 } // end main
