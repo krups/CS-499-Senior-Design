@@ -85,7 +85,6 @@ void *PackagingThread(void *arguments)
 {
     DataSelector dataSelector;
     std::vector<DataPoint*> dataList;
-    std::vector<DataPoint*> oldData;
     std::ifstream sensorFile;
     
     while (true)
@@ -117,13 +116,12 @@ void *PackagingThread(void *arguments)
 
         // Check if previous packet was used
         if (dataUsed) {
-            dataSelector.markUsed(oldData);  // does this take parameters?
+            dataSelector.markUsed();  // does this take parameters?
             dataUsed = false;
         }
 
         // Put the new packet in the buffer
         packetBuffer = packet;
-        oldData = dataList;  // keep track of what data is in it
 
         sem_post(&packetSem);
     } // end while(true)
