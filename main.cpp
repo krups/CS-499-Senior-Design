@@ -132,9 +132,11 @@ void *PackagingThread(void *arguments)
         // Put the new packet in the buffer
         strncpy(packetBuffer, packet.c_str(), PACKET_SIZE);
 
+        printf("Generated packet: %s\n", packetBuffer);
+
         sem_post(&packetSem);
     } // end while(true)
-
+    
     return NULL;
 } // end PackagingThread
 
