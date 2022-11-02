@@ -55,7 +55,7 @@ bool checkValid(Data data)
         // Check for valid numbers
         if (points[i] == NAN)
         {
-#ifdef VALIDITY
+#ifdef VALIDITY_P
             printf("Error %u: Validity check failed! with '%d is NAN'!\n", data.getTimeStamp(), i);
 #endif
             return false;
@@ -64,7 +64,7 @@ bool checkValid(Data data)
         // TC Validity Check
         if (data.getType() == TC_SERIAL && (points[i] < TC_LOW || points[i] > TC_MAX))
         {
-#ifdef VALIDITY
+#ifdef VALIDITY_P
             printf("Error %u: TC validity check failed with '%d = %u'!\n", data.getTimeStamp(), i, points[i]);
 #endif
             return false;
@@ -73,7 +73,7 @@ bool checkValid(Data data)
         // ACC Validity Check
         if (data.getType() == ACC_SERIAL && (points[i] < ACC_LOW || points[i] > ACC_HIGH))
         {
-#ifdef VALIDITY
+#ifdef VALIDITY_P
             printf("Error %u: ACC validity check failed with '%d = %u'!\n", data.getTimeStamp(), i, points[i]);
 #endif
             return false;
@@ -131,12 +131,12 @@ void *PackagingThread(void *arguments)
 
         // Put the new packet in the buffer
         strncpy(packetBuffer, packet.c_str(), PACKET_SIZE);
-
+#ifdef PACKET_P
         printf("Generated packet: %s\n", packetBuffer);
-
+#endif
         sem_post(&packetSem);
     } // end while(true)
-    
+
     return NULL;
 } // end PackagingThread
 
