@@ -50,7 +50,7 @@ void DataSelector::updateDataPoints() {
       // If there were previously tracked data points
       if (dataPoints[currentSensor->id]->size() != 0) {
         // Open the file to the last known data point
-        sensorFile.seekg((*dataPoints[currentSensor->id])[dataPoints[currentSensor->id]->size() - 1].fileIndex, std::ios_base::binary);
+        sensorFile.seekg((*dataPoints[currentSensor->id])[dataPoints[currentSensor->id]->size() - 1].fileIndex, std::ios_base::beg);
         // And discard the last data point so the read pointer is at the start of the next data point
         getline(sensorFile, row);
       }
@@ -86,11 +86,11 @@ std::vector<DataPoint*>* DataSelector::selectData() {
   // First, update the vectors of data points that are tracked in memory and used for data selection
   updateDataPoints();
 
-  // If there was packet made by a previous call, move it to the variable for tracking previous calls
-  if (!(*currentData).empty()) {
+  // Track the previously generated vector of data points
+  if (previousData != nullptr) {
     free(previousData);
-    previousData = currentData;
   }
+  previousData = currentData;
 
   // Create a temporary unordered map of vectors of all data points that are chosen for the next packet
   std::unordered_map<sensor_id_t, std::vector<DataPoint*>*> tempDataPointList;
@@ -106,7 +106,7 @@ std::vector<DataPoint*>* DataSelector::selectData() {
     Sensor* currentSensor = &sensorsList->list[sensorIndex];
 
     // Calculate the number of bytes allocated for this sensor's data
-    unsigned int targetByteCount = BYTE_TARGET * (currentSensor->priority / totalSensorPriority);
+    unsigned int targetByteCount = (unsigned int) (BYTE_TARGET * ((float)currentSensor->priority / (float)totalSensorPriority));
 
     // Find out how many data points this sensor can contribute to fill this space
     unsigned int numDataPoints = targetByteCount / currentSensor->numBytes;
