@@ -18,10 +18,10 @@ public:
 
 class SensorList {
 public:
-  SensorList() {this->prioritySum = 0;};
+  unsigned int listSize;
   std::vector<Sensor> list;
-  unsigned int prioritySum;
-  void addSensor(sensor_id_t id, uint8_t priority, uint8_t numDataPoints, uint8_t numBitsPerDataPoint) {Sensor newSensor = Sensor(id, priority, numDataPoints, numBitsPerDataPoint; list.push_back(newSensor); prioritySum += priority;};
+  SensorList() {listSize = 0;};
+  void addSensor(sensor_id_t id, uint8_t priority, uint8_t numDataPoints, uint8_t numBitsPerDataPoint) {Sensor newSensor = Sensor(id, priority, numDataPoints, numBitsPerDataPoint); list.push_back(newSensor); listSize++;};
 };
 
 #endif
