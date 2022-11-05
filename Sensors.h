@@ -10,15 +10,18 @@ class Sensor {
 public:
   sensor_id_t id;
   uint8_t priority;
-  uint8_t numBytes;
-  Sensor() {this->id = 0; this->priority = 0;};
-  Sensor(sensor_id_t id, uint8_t priority, uint8_t numBytes) {this->id = id; this->priority = priority; this->numBytes = numBytes;};
+  uint8_t numDataPoints;
+  uint8_t numBitsPerDataPoint;
+  Sensor() {this->id = 0; this->priority = 0; this->numDataPoints = 0; this-> numBitsPerDataPoint = 0;};
+  Sensor(sensor_id_t id, uint8_t priority, uint8_t numDataPoints, uint8_t numBitsPerDataPoint) {this->id = id; this->priority = priority; this->numDataPoints = numDataPoints; this->numBitsPerDataPoint = numBitsPerDataPoint;};
 };
 
 class SensorList {
 public:
+  SensorList() {this->prioritySum = 0;};
   std::vector<Sensor> list;
-  void addSensor(sensor_id_t id, uint8_t priority, uint8_t numBytes) {Sensor newSensor = Sensor(id, priority, numBytes); list.push_back(newSensor);};
+  unsigned int prioritySum;
+  void addSensor(sensor_id_t id, uint8_t priority, uint8_t numDataPoints, uint8_t numBitsPerDataPoint) {Sensor newSensor = Sensor(id, priority, numDataPoints, numBitsPerDataPoint; list.push_back(newSensor); prioritySum += priority;};
 };
 
 #endif

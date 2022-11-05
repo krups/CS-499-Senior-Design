@@ -221,10 +221,10 @@ void *IOThread(void *arguments)
 int main()
 {
     // Active Sensors
-    // Entries should be formatted: sensor_id, sensor_priority, num_bytes
-    sensors.addSensor(THERMOCOUPLE, 1, 5);
-    sensors.addSensor(SPECTROMETER, 1, 6);
-    sensors.addSensor(ACCELEROMETER, 1, 3);
+    // Entries should be formatted: sensor_id, sensor_priority, num_data_points, num_bits_per_data_point
+    sensors.addSensor(THERMOCOUPLE, 1, 2, 16);
+    sensors.addSensor(SPECTROMETER, 1, 2, 16);
+    sensors.addSensor(ACCELEROMETER, 1, 2, 16);
 
     // Start semaphores
     if (sem_init(&packetSem, 0, 1) != 0)
