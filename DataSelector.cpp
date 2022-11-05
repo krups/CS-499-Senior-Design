@@ -89,25 +89,33 @@ std::vector<DataPoint*>* DataSelector::selectData() {
   }
   previousData = currentData;
 
+  // Make an unordered map of ints to track how many data points go to each sensor
+  std::unordered_map<sensor_id_t, unsigned int> pointsPerSensor;
+  for (unsigned int sensorIndex = 0; sensorIndex < sensorListSize; sensorIndex++) {
+    pointsPerSensor[sensorsList->list[sensorIndex].id] = 0;
+  }
+
+  // Loop while allocating points to each sensor until every possible bit has been used
+  unsigned int usedSpace = 0;
+  bool moreSpace = true; // Make this actually become false or change looping condition when fully made
+  while (moreSpace) {
+    
+  }
+
   // Create a temporary unordered map of vectors of all data points that are chosen for the next packet
   std::unordered_map<sensor_id_t, std::vector<DataPoint*>*> tempDataPointList;
   
   // Initialize the unordered map's vectors
-  unsigned int sensorIndex;
   for (auto [sensorId, sensorSettings] : sensors->sensorMap) {
     tempDataPointList[sensorId] = new std::vector<DataPoint*>;
   }
 
   // For every sensor
   for (auto [sensorId, sensorSettings] : sensors->sensorMap) {
-    // Calculate the number of bytes allocated for this sensor's data
-    unsigned int targetByteCount = (unsigned int) (PACKET_SIZE * ((float)sensorSettings->priority / (float)totalSensorPriority));
 
-    // Find out how many data points this sensor can contribute to fill this space
-    unsigned int numDataPoints = targetByteCount / sensorSettings->numBitsPerDataPoint;
-
-    // Find out how many of these data points will be old data
-    unsigned int numOldData = numDataPoints * (1 - NEW_DATA_RATIO);
+    // NUM NEW DATA CALCULATED HERE
+    // NUM OLD DATA CALCULATED HERE
+    
     // Calculate the index increment to allow that number of data points to be evenly spaced across time (from the first recorded data point to the last used data point)
     unsigned int oldDataSpacing = lastDataPointUsedIndex[sensorId] / numOldData;
     oldDataSpacing = std::max((unsigned int) 1, oldDataSpacing);
@@ -116,8 +124,6 @@ std::vector<DataPoint*>* DataSelector::selectData() {
       tempDataPointList[sensorId]->push_back(&(*dataPoints[sensorId])[dataPointIndex]);
     }
     
-    // Find out how many of these data points will be new data
-    unsigned int numNewData = numDataPoints * NEW_DATA_RATIO;
     // Calculate the index increment to allow that number of data points to be evenly spaced across time (from the last used data point to the last recorded data point)
     unsigned int newDataSpacing = (dataPoints[sensorId]->size() - lastDataPointUsedIndex[sensorId]) / numNewData;
     newDataSpacing = std::max((unsigned int) 1, newDataSpacing);
