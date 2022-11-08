@@ -2,6 +2,7 @@
 #include <unordered_map>
 #include <fstream>
 #include "config.h"
+#include "Sensors.h"
 #include "DataPoint.h"
 
 class DataSelector {

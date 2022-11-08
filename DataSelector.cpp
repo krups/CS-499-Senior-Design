@@ -106,10 +106,10 @@ std::vector<DataPoint*>* DataSelector::selectData() {
     Sensor* currentSensor = &sensorsList->list[sensorIndex];
 
     // Calculate the number of bytes allocated for this sensor's data
-    unsigned int targetByteCount = (unsigned int) (BYTE_TARGET * ((float)currentSensor->priority / (float)totalSensorPriority));
+    unsigned int targetByteCount = (unsigned int) (PACKET_SIZE * ((float)currentSensor->priority / (float)totalSensorPriority));
 
     // Find out how many data points this sensor can contribute to fill this space
-    unsigned int numDataPoints = targetByteCount / currentSensor->numBytes;
+    unsigned int numDataPoints = targetByteCount / currentSensor->numBitsPerDataPoint;
 
     // Find out how many of these data points will be old data
     unsigned int numOldData = numDataPoints * (1 - NEW_DATA_RATIO);
