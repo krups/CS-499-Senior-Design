@@ -1,15 +1,22 @@
 #include "DataSelector.h"
 
+DataSelector::DataSelector() {
+  sensorPriorityLCM = 1;
+}
+
 DataSelector::DataSelector(SensorMap* sensors) {
   // Allocate memory and set initial variable values
-  totalSensorPriority = 0;
-
-  sensors = sensors;
+  this->sensors = sensors;
+  sensorPriorityLCM = 1;
 
   for (auto [sensorId, sensorSettings] : sensors->sensorMap) {
     dataPoints[sensorId] = new std::vector<DataPoint>;
     lastDataPointUsedIndex[sensorId] = 0;
-    totalSensorPriority += sensorSettings->priority;
+    sensorPriorityLCM = std::lcm(sensorPriorityLCM, sensorSettings->priority);
+  }
+
+  for (auto [sensorId, sensorSettings] : sensors->sensorMap) {
+    sensorRelativeSpacing[sensorId] = sensorPriorityLCM / sensorSettings->priority;
   }
 }
 
@@ -91,15 +98,34 @@ std::vector<DataPoint*>* DataSelector::selectData() {
 
   // Make an unordered map of ints to track how many data points go to each sensor
   std::unordered_map<sensor_id_t, unsigned int> pointsPerSensor;
-  for (unsigned int sensorIndex = 0; sensorIndex < sensorListSize; sensorIndex++) {
-    pointsPerSensor[sensorsList->list[sensorIndex].id] = 0;
+  for (auto [sensorId, sensorSettings] : sensors->sensorMap) {
+    pointsPerSensor[sensorId] = 0;
+  }
+
+  // Make an unordered map of ints to track which iteration the next data point should be added for each sensor
+  std::unordered_map<sensor_id_t, unsigned int> nextIterationPerSensor;
+  for (auto [sensorId, sensorSettings] : sensors->sensorMap) {
+    nextIterationPerSensor[sensorId] = 0;
   }
 
   // Loop while allocating points to each sensor until every possible bit has been used
   unsigned int usedSpace = 0;
-  bool moreSpace = true; // Make this actually become false or change looping condition when fully made
-  while (moreSpace) {
-    
+  unsigned int iteration = 0;
+  unsigned int maxIterations = -1; // This is an intentional overflow to the largest possible unsigned int value
+  while (iteration < maxIterations) {
+    for (auto [sensorId, sensorSettings] : sensors->sensorMap) {
+      if (iteration >= nextIterationPerSensor[sensorId]) {
+        if ((usedSpace + sensorSettings->numBitsPerDataPoint) < PACKET_SIZE_BITS) {
+          usedSpace += sensorSettings->numBitsPerDataPoint;
+          pointsPerSensor[sensorId] += 1;
+          nextIterationPerSensor[sensorId] += sensorRelativeSpacing[sensorId];
+        } else {
+          maxIterations = iteration + sensorPriorityLCM;
+        }
+      }
+    }
+
+    iteration++;
   }
 
   // Create a temporary unordered map of vectors of all data points that are chosen for the next packet
@@ -113,8 +139,8 @@ std::vector<DataPoint*>* DataSelector::selectData() {
   // For every sensor
   for (auto [sensorId, sensorSettings] : sensors->sensorMap) {
 
-    // NUM NEW DATA CALCULATED HERE
-    // NUM OLD DATA CALCULATED HERE
+    unsigned int numOldData = pointsPerSensor[sensorId] * (1 - NEW_DATA_RATIO); // Calculate this first to have the division round down on old data, giving a round up on new data
+    unsigned int numNewData = pointsPerSensor[sensorId] - numOldData;
     
     // Calculate the index increment to allow that number of data points to be evenly spaced across time (from the first recorded data point to the last used data point)
     unsigned int oldDataSpacing = lastDataPointUsedIndex[sensorId] / numOldData;

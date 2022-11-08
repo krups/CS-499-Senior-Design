@@ -1,12 +1,14 @@
 #include <vector>
 #include <unordered_map>
 #include <fstream>
+#include <numeric>
 #include "config.h"
 #include "Sensors.h"
 #include "DataPoint.h"
 
 class DataSelector {
   public:
+    DataSelector();
     DataSelector(SensorMap* sensors);
     ~DataSelector();
     std::vector<DataPoint*>* selectData();
@@ -15,8 +17,11 @@ class DataSelector {
   private:
     void updateDataPoints();
 
-    unsigned int totalSensorPriority;
     SensorMap* sensors;
+    
+    unsigned int sensorPriorityLCM;
+    std::unordered_map<sensor_id_t, unsigned int> sensorRelativeSpacing;
+
     std::vector<DataPoint*>* currentData;
     std::vector<DataPoint*>* previousData;
 
