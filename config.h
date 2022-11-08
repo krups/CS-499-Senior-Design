@@ -2,7 +2,6 @@
 #define CONFIG_H
 
 #include <string>
-#include "Sensors.h"
 
 // Maximum packet size in bytes
 #define PACKET_SIZE 340
@@ -46,7 +45,6 @@ const std::string SENSOR_DATA_PATH = "./data/"; // This directory must exist bef
 #define ACC_HIGH 100
 
 // Data Selection Config
-#define BYTE_TARGET PACKET_SIZE
 #define NEW_DATA_RATIO 0.8
 #define POINT_INCLUDE_LIMIT 1
 
