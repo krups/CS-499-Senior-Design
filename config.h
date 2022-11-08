@@ -10,7 +10,7 @@
 
 // Sensor metadata size in bytes
 #define SENSOR_METADATA_BITS 16
-#define SENSOR_ID_BITS 3
+#define SENSOR_ID_BITS 4
 #define SENSOR_TIMESTAMP_BITS SENSOR_METADATA_BITS - SENSOR_ID_BITS
 
 // Serial port which interfaces with Feather M4 Express
@@ -22,9 +22,20 @@
 // Sensor ID Config
 const std::string SENSOR_DATA_PATH = "./data/"; // This directory must exist before running the program
 
-#define THERMOCOUPLE 1
-#define SPECTROMETER 2
-#define ACCELEROMETER 3
+#define THERMOCOUPLE_ID 1
+#define THERMOCOUPLE_PRIORITY 1
+#define THERMOCOUPLE_NUM_DATA_POINTS 2
+#define THERMOCOUPLE_NUM_BITS_PER_DATA_POINT 16
+
+#define SPECTROMETER_ID 2
+#define SPECTROMETER_PRIORITY 1
+#define SPECTROMETER_NUM_DATA_POINTS 2
+#define SPECTROMETER_NUM_BITS_PER_DATA_POINT 16
+
+#define ACCELEROMETER_ID 3
+#define ACCELEROMETER_PRIORITY 1
+#define ACCELEROMETER_NUM_DATA_POINTS 2
+#define ACCELEROMETER_NUM_BITS_PER_DATA_POINT 16
 
 // Validity parameters
 // Check for erroneous data 

@@ -222,9 +222,9 @@ int main()
 {
     // Active Sensors
     // Entries should be formatted: sensor_id, sensor_priority, num_data_points, num_bits_per_data_point
-    sensors.addSensor(THERMOCOUPLE, 1, 2, 16);
-    sensors.addSensor(SPECTROMETER, 1, 2, 16);
-    sensors.addSensor(ACCELEROMETER, 1, 2, 16);
+    sensors.addSensor(THERMOCOUPLE_ID, THERMOCOUPLE_PRIORITY, THERMOCOUPLE_NUM_DATA_POINTS, THERMOCOUPLE_NUM_BITS_PER_DATA_POINT);
+    sensors.addSensor(SPECTROMETER_ID, SPECTROMETER_PRIORITY, SPECTROMETER_NUM_DATA_POINTS, SPECTROMETER_NUM_BITS_PER_DATA_POINT);
+    sensors.addSensor(ACCELEROMETER_ID, ACCELEROMETER_PRIORITY, ACCELEROMETER_NUM_DATA_POINTS, ACCELEROMETER_NUM_BITS_PER_DATA_POINT);
 
     // Start semaphores
     if (sem_init(&packetSem, 0, 1) != 0)
