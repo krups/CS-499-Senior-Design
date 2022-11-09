@@ -7,7 +7,7 @@
 
 class DataSelector {
   public:
-    DataSelector(SensorList* sensors);
+    DataSelector(SensorMap* sensors);
     ~DataSelector();
     std::vector<DataPoint*>* selectData();
     void markUsed();
@@ -16,8 +16,7 @@ class DataSelector {
     void updateDataPoints();
 
     unsigned int totalSensorPriority;
-    SensorList* sensorsList;
-    unsigned int sensorListSize;
+    SensorMap* sensors;
     std::vector<DataPoint*>* currentData;
     std::vector<DataPoint*>* previousData;
 

@@ -20,7 +20,7 @@ bool dataUsed = false;
 sem_t packetSem;
 sem_t sensor1Sem;
 
-SensorList sensors;
+SensorMap sensors;
 
 void saveData(Data data)
 {
