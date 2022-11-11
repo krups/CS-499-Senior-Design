@@ -11,7 +11,7 @@ cleanData:
 	rm -rf ./data/*
 
 test: test.cpp data.cpp
-	g++ -o test test.cpp data.cpp -Wall -pthread
+	g++ -o test test.cpp data.cpp copyBits.cpp -Wall -pthread
 	./test
 clean:
 	rm -f $(GOAL) a.out
