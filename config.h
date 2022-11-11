@@ -15,6 +15,7 @@
 
 // Sensor ID Config
 const std::string SENSOR_DATA_PATH = "./data/"; // This directory must exist before running the program
+const std::string PACKET_DATA_PATH = "./data/packets/" // This directory must exist before running the program
 
 #define THERMOCOUPLE 1
 #define SPECTROMETER 2
