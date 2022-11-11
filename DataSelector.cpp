@@ -11,7 +11,7 @@ DataSelector::DataSelector(SensorMap* sensors) {
 
   for (auto [sensorId, sensorSettings] : sensors->sensorMap) {
     dataPoints[sensorId] = new std::vector<DataPoint>;
-    lastDataPointUsedIndex[sensorId] = 0;
+    lastDataPointUsedIndex[sensorId] = -1;
     sensorPriorityLCM = std::lcm(sensorPriorityLCM, sensorSettings->priority);
   }
 
@@ -141,23 +141,38 @@ std::vector<DataPoint*>* DataSelector::selectData() {
   // For every sensor
   for (auto [sensorId, sensorSettings] : sensors->sensorMap) {
 
-    unsigned int numOldData = pointsPerSensor[sensorId] * (1 - NEW_DATA_RATIO); // Calculate this first to have the division round down on old data, giving a round up on new data
+    // Determine how much data for this sensor will be old or new data points
+    unsigned int numOldData = 0;
+    // Only if old data exists let any points be allocated to old data
+    if (lastDataPointUsedIndex[sensorId] >= 0) {
+      numOldData = pointsPerSensor[sensorId] * (1 - NEW_DATA_RATIO); // Calculate old data count before new data count to have the integer multiplication round down on old data, giving a round up on new data
+    }
     unsigned int numNewData = pointsPerSensor[sensorId] - numOldData;
+
+    // Calculate the index increment to allow that number of data points to be evenly spaced across time (from the last used data point to the last recorded data point)
+    unsigned int newDataSpacing = (dataPoints[sensorId]->size() - lastDataPointUsedIndex[sensorId]) / numNewData;
+    newDataSpacing = std::max((unsigned int) 1, newDataSpacing);
+
+    // Iterate through the new data points using the calculated increment and add them to the temporary vector
+    unsigned int sensorDataSize = dataPoints[sensorId]->size();
+    unsigned int numNewDataPointsInluded = 0;
+    for (unsigned int dataPointIndex = sensorDataSize - 1; dataPointIndex > lastDataPointUsedIndex[sensorId]; dataPointIndex -= newDataSpacing) {
+      tempDataPointList[sensorId]->push_back(&(*dataPoints[sensorId])[dataPointIndex]);
+      numNewDataPointsInluded++;
+    }
+
+    // If for whatever reason the target number of new points couldn't be reached (not enough new points to select that many)
+    if (numNewDataPointsInluded != numNewData) {
+      // Allocate the unused space to old points to reduce wasted space
+      numOldData = pointsPerSensor[sensorId] - numNewDataPointsInluded;
+    }
     
     // Calculate the index increment to allow that number of data points to be evenly spaced across time (from the first recorded data point to the last used data point)
     unsigned int oldDataSpacing = lastDataPointUsedIndex[sensorId] / numOldData;
     oldDataSpacing = std::max((unsigned int) 1, oldDataSpacing);
+
     // Iterate through the old data points using the calculated increment and add them to the temporary vector
-    for (unsigned int dataPointIndex = 0; dataPointIndex < lastDataPointUsedIndex[sensorId]; dataPointIndex += oldDataSpacing) {
-      tempDataPointList[sensorId]->push_back(&(*dataPoints[sensorId])[dataPointIndex]);
-    }
-    
-    // Calculate the index increment to allow that number of data points to be evenly spaced across time (from the last used data point to the last recorded data point)
-    unsigned int newDataSpacing = (dataPoints[sensorId]->size() - lastDataPointUsedIndex[sensorId]) / numNewData;
-    newDataSpacing = std::max((unsigned int) 1, newDataSpacing);
-    // Iterate through the new data points using the calculated increment and add them to the temporary vector
-    unsigned int sensorDataSize = dataPoints[sensorId]->size();
-    for (unsigned int dataPointIndex = lastDataPointUsedIndex[sensorId] + newDataSpacing; dataPointIndex < sensorDataSize; dataPointIndex += newDataSpacing) {
+    for (unsigned int dataPointIndex = oldDataSpacing / 2; dataPointIndex < lastDataPointUsedIndex[sensorId]; dataPointIndex += oldDataSpacing) {
       tempDataPointList[sensorId]->push_back(&(*dataPoints[sensorId])[dataPointIndex]);
     }
   }
