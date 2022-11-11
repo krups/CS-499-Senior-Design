@@ -67,12 +67,6 @@ void DataSelector::updateDataPoints() {
         newDataPoint.numIncludes = 0;
         newDataPoint.fileIndex = sensorFile.tellg();
 
-        // Read the information for this data point
-        getline(sensorFile, row);
-
-        // Use the file data to extract the timestamp
-        newDataPoint.timestamp = (uint16_t) *(row.c_str() + sizeof(sensor_id_t));
-
         // Add the new DataPoint to the vector of data points for that sensor
         dataPoints[sensorId]->push_back(newDataPoint);
       }
