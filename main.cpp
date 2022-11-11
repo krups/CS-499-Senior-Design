@@ -41,7 +41,7 @@ void saveData(Data data)
     }
     else
 #ifdef PRINT_DATA
-        printf("Open: %s failed!\n", path);
+        printf("Open: %s failed!\n", path.c_str());
 #endif
     sensorDataFile.close();
 }
@@ -181,12 +181,16 @@ void *IOThread(void *arguments)
                 code += line[x];
                 x++;
             }
+            printf("CODE: %s\n", code.c_str());
+            printf("CODE to INT: %d\n", stoi(code));
 
             // Return most recent packet if command
             if (stoi(code) == PACKET_REQUEST)
             {
                 sem_wait(&packetSem);
                 // TODO: Send most recent packet
+                printf("PACKET REQUEST RECEIVED:\n");
+                printf("Generated packet: %s\n", packetBuffer);
                 serialPuts(fd, packetBuffer);
                 sem_post(&packetSem);
             }
