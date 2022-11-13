@@ -14,6 +14,7 @@
 #include "data.h"
 #include "serial_headers.h"
 #include "DataSelector.h"
+#include "copyBits.h"
 
 char packetBuffer[PACKET_SIZE];
 bool dataUsed = false;
@@ -87,30 +88,47 @@ void *PackagingThread(void *arguments)
     DataSelector dataSelector(&sensors);
     std::vector<DataPoint *> dataList;
     std::ifstream sensorFile;
-    std::string data;
+    uint8_t * buffer;
+    uint8_t * newPacket;
 
+    // Constantly create new packets
     while (true)
     {
-        std::string packet;
-
         // Select data
         dataList = *dataSelector.selectData();
 
         // Read each data point from sensor file
+        int startingPos = 0;
         for (DataPoint *dataInfo : dataList)
         {
+            // Open the sensor file
             sem_wait(&sensor1Sem);
-
             std::string path = SENSOR_DATA_PATH;
             path += std::to_string(dataInfo->sensor_id);
             sensorFile.open(path, std::ios_base::binary);
 
             if (sensorFile.is_open())
             {
+                // Go to the line
                 sensorFile.seekg(dataInfo->fileIndex);
-                getline(sensorFile, data);
-                packet += data;
+
+                // Find the number of bytes for that type
+                int numBits = sensors[dataInfo->sensor_id].numBitsPerDataPoint();
+                int numBytes = ceil(numBits/8.0);
+
+                // Read the bytes
+                buffer = (uint8_t*) malloc (numBytes);
+                sensorFile.read(buffer, numBytes);
+                if (!sensorFile)
+                    std::cout << "ERROR: only " << sensorFile.gcount() << "bytes could be read";
+
+                // Add to the packet
+                CopyBitsB(buffer, 0, newPacket, startingPos, numBits);
+                startingPos += numBits;
+
+                // Clean up
                 sensorFile.close();
+                free(buffer);
             }
             else
             {
@@ -120,20 +138,26 @@ void *PackagingThread(void *arguments)
             sem_post(&sensor1Sem);
         }
 
+        // Write 0s in remaining bits
+        writeZeros(newPacket, startingPos, PACKET_SIZE_BITS)
+
+        // Access packet buffer
         sem_wait(&packetSem);
 
-        // Check if previous packet was used
-        if (dataUsed)
+        // If the previous packet was used, mark data as sent
+        if (dataUsed) 
         {
-            dataSelector.markUsed(); // does this take parameters?
+            dataSelector.markUsed();
             dataUsed = false;
         }
 
-        // Put the new packet in the buffer
-        strncpy(packetBuffer, packet.c_str(), PACKET_SIZE);
-#ifdef PACKET_P
+        // Write new packet
+        copyBitsB(newPacket, 0, packetBuffer, 0, PACKET_SIZE); 
+
+#ifdef PACKET_P  // Print the packet for debugging
         printf("Generated packet: %s\n", packetBuffer);
 #endif
+        // Release packet buffer
         sem_post(&packetSem);
     } // end while(true)
 
