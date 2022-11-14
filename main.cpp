@@ -100,45 +100,48 @@ void *PackagingThread(void *arguments)
         // Select data
         dataList = *dataSelector.selectData();
 
-        // Read each data point from sensor file
-        int startingPos = 0;
-        for (DataPoint *dataInfo : dataList)
-        {
-            // Open the sensor file
-            sem_wait(&sensor1Sem);
-            std::string path = SENSOR_DATA_PATH;
-            path += std::to_string(dataInfo->sensor_id);
-            sensorFile.open(path, std::ios_base::binary);
-
-            if (sensorFile.is_open())
+        // If there was data, create a new packet
+        if (!dataList.empty()) {
+            // Read each data point from sensor file
+            int startingPos = 0;
+            for (DataPoint *dataInfo : dataList)
             {
-                // Go to the line
-                sensorFile.seekg(dataInfo->fileIndex);
+                // Open the sensor file
+                sem_wait(&sensor1Sem);
+                std::string path = SENSOR_DATA_PATH;
+                path += std::to_string(dataInfo->sensor_id);
+                sensorFile.open(path, std::ios_base::binary);
 
-                // Find the number of bytes for that type
-                int numBits = sensors.sensorMap[dataInfo->sensor_id]->numBitsPerDataPoint;
-                int numBytes = ceil(numBits/8.0);
+                if (sensorFile.is_open())
+                {
+                    // Go to the line
+                    sensorFile.seekg(dataInfo->fileIndex);
 
-                // Read the bytes
-                buffer = (uint8_t*) malloc (numBytes);
+                    // Find the number of bytes for that type
+                    int numBits = sensors.sensorMap[dataInfo->sensor_id]->numBitsPerDataPoint;
+                    int numBytes = ceil(numBits/8.0);
+
+                    // Read the bytes
+                    buffer = (uint8_t*) malloc (numBytes);
                     sensorFile.read((char*) buffer, numBytes);
-                if (!sensorFile)
-                    std::cout << "ERROR: only " << sensorFile.gcount() << "bytes could be read";
+                    if (!sensorFile)
+                        std::cout << "ERROR: only " << sensorFile.gcount() << "bytes could be read";
 
-                // Add to the packet
+                    // Add to the packet
                     copyBitsB(buffer, 0, newPacket, startingPos, numBits);
-                startingPos += numBits;
+                    startingPos += numBits;
 
-                // Clean up
-                sensorFile.close();
-                free(buffer);
-            }
-            else
-            {
-                std::cout << "ERROR: could not open " << path << std::endl;
-            }
+                    // Clean up
+                    sensorFile.close();
+                    free(buffer);
+                }
+                else
+                {
+                    std::cout << "ERROR: could not open " << path << std::endl;
+                }
 
-            sem_post(&sensor1Sem);
+                sem_post(&sensor1Sem);
+            }
         }
 
         // Access packet buffer
@@ -151,7 +154,11 @@ void *PackagingThread(void *arguments)
             dataUsed = false;
         }
 
+        // If there was new data, write new packet
+        if (!dataList.empty()) {
             copyBitsB(newPacket, 0, (uint8_t*) packetBuffer, 0, PACKET_SIZE); 
+        }
+        
 
 #ifdef PACKET_P  // Print the packet for debugging
         printf("Generated packet: %s\n", packetBuffer);
