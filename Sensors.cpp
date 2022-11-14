@@ -11,7 +11,7 @@ SensorSettings::SensorSettings(uint8_t priority, uint8_t numSamplesPerDataPoint,
   this->priority = priority;
   this->numSamplesPerDataPoint = numSamplesPerDataPoint;
   this->numBitsPerSample = numBitsPerSample;
-  this->numBitsPerDataPoint = SENSOR_METADATA_BITS + (numSamplesPerDataPoint + numBitsPerDataPoint);
+  this->numBitsPerDataPoint = SENSOR_METADATA_BITS + (numSamplesPerDataPoint * numBitsPerSample);
 }
 
 SensorMap::SensorMap() {
