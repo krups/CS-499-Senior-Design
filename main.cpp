@@ -213,9 +213,11 @@ void *IOThread(void *arguments)
 			packetFileName++;
 		}
 		else
+		{
 #ifdef PRINT_DATA
 			printf("Open: %s failed!\n", path.c_str());
 #endif
+		}
     		packetDataFile.close();
             }
             // Otherwise, save data
