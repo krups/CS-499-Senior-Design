@@ -94,6 +94,9 @@ void *PackagingThread(void *arguments)
     // Constantly create new packets
     while (true)
     {
+        // Initialize newPacket to zeros
+        memset(newPacket, '\0', PACKET_SIZE);
+
         // Select data
         dataList = *dataSelector.selectData();
 
@@ -137,9 +140,6 @@ void *PackagingThread(void *arguments)
 
             sem_post(&sensor1Sem);
         }
-
-        // Write 0s in remaining bits
-        writeZeros(newPacket, startingPos, PACKET_SIZE_BITS)
 
         // Access packet buffer
         sem_wait(&packetSem);
@@ -248,6 +248,9 @@ void *IOThread(void *arguments)
 
 int main()
 {
+    // Initialize packet buffer to zeros
+    memset(packetBuffer, '\0', PACKET_SIZE);
+
     // Active Sensors
     // Entries should be formatted: sensor_id, sensor_priority, num_samples_per_data_point, num_bits_per_sample
     sensors.addSensor(THERMOCOUPLE_ID, THERMOCOUPLE_PRIORITY, THERMOCOUPLE_NUM_SAMPLES_PER_DATA_POINT, THERMOCOUPLE_NUM_BITS_PER_SAMPLE);
