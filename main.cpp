@@ -164,6 +164,8 @@ void *IOThread(void *arguments)
     int pos = 0;
     std::string code = "";
 
+    int packetFileName = 0;
+
     while (true)
     {
         // Gets the first int, converts to char
@@ -188,11 +190,35 @@ void *IOThread(void *arguments)
             if (stoi(code) == PACKET_REQUEST)
             {
                 sem_wait(&packetSem);
-                // TODO: Send most recent packet
                 printf("PACKET REQUEST RECEIVED:\n");
                 printf("Generated packet: %s\n", packetBuffer);
                 serialPuts(fd, packetBuffer);
                 sem_post(&packetSem);
+
+		// Save sent packet
+		std::ofstream packetDataFile;
+		std::string path = PACKET_DATA_PATH;
+		path += packetFileName;
+
+		packetDataFile.open(path, std::ios_base::app);
+		if (!packetDataFile.fail())
+		{
+			sem_wait(&packetSem);
+			// Writes 1 packet of size PACKET_SIZE from packetBuffer to packetDataFile
+			fwrite(packetBuffer, PACKET_SIZE, 1, packetDataFile);
+#ifdef PRINT_DATA
+			printf("Saved packet %s to file!\n", packetBuffer);
+#endif
+			sem_post(&packetSem);
+			packetFileName++;
+		}
+		else
+		{
+#ifdef PRINT_DATA
+			printf("Open: %s failed!\n", path.c_str());
+#endif
+		}
+    		packetDataFile.close();
             }
             // Otherwise, save data
             else
