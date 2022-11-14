@@ -90,6 +90,77 @@ void DataSelector::updateDataPoints() {
   }
 }
 
+unsigned int DataSelector::selectDataPointsGradient(sensor_id_t sensorId, unsigned int numData, std::vector<DataPoint*>* tempDataPointList, unsigned int start, unsigned int end) {
+  double totalNewGradient = 0;
+    
+  for (unsigned int dataPointIndex = start; dataPointIndex <= end; dataPointIndex++) {
+    totalNewGradient += (*dataPoints[sensorId])[dataPointIndex].gradient;
+  }
+
+  double newGradientSpacing = totalNewGradient / numData;
+
+  unsigned int numPointsSelected = 0;
+
+  bool allDataUsed = false;
+
+  for (unsigned int index = 1; index <= numData; index++) {
+    if (allDataUsed == true) {
+      break;
+    }
+
+    bool pointPicked = false;
+
+    double targetGradient = newGradientSpacing * index;
+
+    for (unsigned int dataPointIndex = start; dataPointIndex <= end; dataPointIndex++) {
+      if (pointPicked == true || allDataUsed == true) {
+        break;
+      }
+
+      targetGradient -= (*dataPoints[sensorId])[dataPointIndex].gradient;
+
+      if (targetGradient <= 0) {
+        if ((*dataPoints[sensorId])[dataPointIndex].used == false) {
+          (*dataPoints[sensorId])[dataPointIndex].used = true;
+          tempDataPointList->push_back(&(*dataPoints[sensorId])[dataPointIndex]);
+          numPointsSelected++;
+        } else {
+          for (unsigned int retryIndex = 1; retryIndex < numData - 1; retryIndex++) {
+            unsigned int retryDataPointIndexUp = dataPointIndex + retryIndex;
+            unsigned int retryDataPointIndexDown = dataPointIndex - retryIndex;
+
+            if (retryDataPointIndexUp <= end) {
+              if ((*dataPoints[sensorId])[retryDataPointIndexUp].used == false) {
+                (*dataPoints[sensorId])[retryDataPointIndexUp].used = true;
+                tempDataPointList->push_back(&(*dataPoints[sensorId])[retryDataPointIndexUp]);
+                numPointsSelected++;
+                pointPicked = true;
+                break;
+              }
+            }
+            
+            if (retryDataPointIndexDown >= start) {
+              if ((*dataPoints[sensorId])[retryDataPointIndexDown].used == false) {
+                (*dataPoints[sensorId])[retryDataPointIndexDown].used = true;
+                tempDataPointList->push_back(&(*dataPoints[sensorId])[retryDataPointIndexDown]);
+                numPointsSelected++;
+                pointPicked = true;
+                break;
+              }
+            }
+          }
+
+          if (!pointPicked) {
+            allDataUsed = true;
+          }
+        }
+      }
+    }
+  }
+
+  return numPointsSelected;
+}
+
 // Called by the packet building thread to select data points to include in the nexxt packet
 std::vector<DataPoint*>* DataSelector::selectData() {
   // First, update the vectors of data points that are tracked in memory and used for data selection
@@ -155,136 +226,15 @@ std::vector<DataPoint*>* DataSelector::selectData() {
 
     // Pick new data points
 
-    double totalNewGradient = 0;
-    
-    for (unsigned int dataPointIndex = lastDataPointUsedIndex[sensorId] + 1; dataPointIndex < sensorDataSize - 1; dataPointIndex++) {
-      totalNewGradient += (*dataPoints[sensorId])[dataPointIndex].gradient;
-    }
+    unsigned int numSelected = selectDataPointsGradient(sensorId, numNewData, tempDataPointList[sensorId], lastDataPointUsedIndex[sensorId] + 1, sensorDataSize - 1);
 
-    double newGradientSpacing = totalNewGradient / numNewData;
-
-    unsigned int numNewDataPointsIncluded = 0;
-
-    bool allNewDataUsed = false;
-
-    for (unsigned int index = 1; index <= numNewData; index++) {
-      if (allNewDataUsed == true) {
-        break;
-      }
-
-      bool pointPicked = false;
-
-      double targetGradient = newGradientSpacing * index;
-
-      for (unsigned int dataPointIndex = lastDataPointUsedIndex[sensorId] + 1; dataPointIndex < sensorDataSize; dataPointIndex++) {
-        if (pointPicked == true || allNewDataUsed == true) {
-          break;
-        }
-
-        targetGradient -= (*dataPoints[sensorId])[dataPointIndex].gradient;
-
-        if (targetGradient <= 0) {
-          if (!(*dataPoints[sensorId])[dataPointIndex].used) {
-            (*dataPoints[sensorId])[dataPointIndex].used = true;
-            tempDataPointList[sensorId]->push_back(&(*dataPoints[sensorId])[dataPointIndex]);
-            numNewDataPointsIncluded++;
-          }
-        } else {
-          for (unsigned int retryIndex = 1; retryIndex < numNewData; retryIndex++) {
-            unsigned int retryDataPointIndexUp = dataPointIndex + retryIndex;
-            unsigned int retryDataPointIndexDown = dataPointIndex - retryIndex;
-
-            if (retryDataPointIndexUp < sensorDataSize) {
-              if ((*dataPoints[sensorId])[retryDataPointIndexUp].used == false) {
-                (*dataPoints[sensorId])[retryDataPointIndexUp].used = true;
-                tempDataPointList[sensorId]->push_back(&(*dataPoints[sensorId])[retryDataPointIndexUp]);
-                numNewDataPointsIncluded++;
-                pointPicked = true;
-                break;
-              }
-            } else if (retryDataPointIndexDown > lastDataPointUsedIndex[sensorId]) {
-              if ((*dataPoints[sensorId])[retryDataPointIndexDown].used == false) {
-                (*dataPoints[sensorId])[retryDataPointIndexDown].used = true;
-                tempDataPointList[sensorId]->push_back(&(*dataPoints[sensorId])[retryDataPointIndexDown]);
-                numNewDataPointsIncluded++;
-                pointPicked = true;
-                break;
-              }
-            }
-          }
-
-          if (!pointPicked) {
-            allNewDataUsed = true;
-          }
-        }
-      }
-    }
-
-    if (allNewDataUsed) {
-      numOldData = pointsPerSensor[sensorId] - numNewDataPointsIncluded;
+    if (numSelected != numNewData) {
+      numOldData = pointsPerSensor[sensorId] - numSelected;
     }
 
     // Pick old data points
 
-    double totalOldGradient = 0;
-    
-    for (unsigned int dataPointIndex = 0; dataPointIndex <= lastDataPointUsedIndex[sensorId]; dataPointIndex++) {
-      totalOldGradient += (*dataPoints[sensorId])[dataPointIndex].gradient;
-    }
-
-    double oldGradientSpacing = totalOldGradient / numOldData;
-
-    bool allOldDataUsed = false;
-
-    for (unsigned int index = 1; index <= numOldData; index++) {
-      if (allOldDataUsed == true) {
-        break;
-      }
-
-      bool pointPicked = false;
-
-      double targetGradient = oldGradientSpacing * index;
-
-      for (unsigned int dataPointIndex = 0; dataPointIndex <= lastDataPointUsedIndex[sensorId]; dataPointIndex++) {
-        if (pointPicked == true || allOldDataUsed == true) {
-          break;
-        }
-
-        targetGradient -= (*dataPoints[sensorId])[dataPointIndex].gradient;
-
-        if (targetGradient <= 0) {
-          if (!(*dataPoints[sensorId])[dataPointIndex].used) {
-            (*dataPoints[sensorId])[dataPointIndex].used = true;
-            tempDataPointList[sensorId]->push_back(&(*dataPoints[sensorId])[dataPointIndex]);
-          }
-        } else {
-          for (unsigned int retryIndex = 1; retryIndex < numOldData; retryIndex++) {
-            unsigned int retryDataPointIndexUp = dataPointIndex + retryIndex;
-            unsigned int retryDataPointIndexDown = dataPointIndex - retryIndex;
-
-            if (retryDataPointIndexUp < sensorDataSize) {
-              if ((*dataPoints[sensorId])[retryDataPointIndexUp].used == false) {
-                (*dataPoints[sensorId])[retryDataPointIndexUp].used = true;
-                tempDataPointList[sensorId]->push_back(&(*dataPoints[sensorId])[retryDataPointIndexUp]);
-                pointPicked = true;
-                break;
-              }
-            } else if (retryDataPointIndexDown > lastDataPointUsedIndex[sensorId]) {
-              if ((*dataPoints[sensorId])[retryDataPointIndexDown].used == false) {
-                (*dataPoints[sensorId])[retryDataPointIndexDown].used = true;
-                tempDataPointList[sensorId]->push_back(&(*dataPoints[sensorId])[retryDataPointIndexDown]);
-                pointPicked = true;
-                break;
-              }
-            }
-          }
-
-          if (!pointPicked) {
-            allOldDataUsed = true;
-          }
-        }
-      }
-    }
+    selectDataPointsGradient(sensorId, numOldData, tempDataPointList[sensorId], 0, lastDataPointUsedIndex[sensorId]);
   }
 
   // Compile the temporary vectors into a single vector
