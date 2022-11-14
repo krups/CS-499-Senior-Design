@@ -11,7 +11,7 @@ DataSelector::DataSelector(SensorMap* sensors) {
 
   for (auto [sensorId, sensorSettings] : sensors->sensorMap) {
     dataPoints[sensorId] = new std::vector<DataPoint>;
-    lastDataPointUsedIndex[sensorId] = -1;
+    nextUnusedDataPointIndex[sensorId] = 0;
     sensorPriorityLCM = std::lcm(sensorPriorityLCM, sensorSettings->priority);
   }
 
@@ -70,21 +70,97 @@ void DataSelector::updateDataPoints() {
         newDataPoint.sensor_id = sensorId;
         newDataPoint.numIncludes = 0;
         newDataPoint.fileIndex = sensorFile.tellg();
-
-        // Add the new DataPoint to the vector of data points for that sensor
-        dataPoints[sensorId]->push_back(newDataPoint);
+        newDataPoint.used = false;
 
         // Read the data so the read pointer advances
         memset(buffer, '\0', bufferSize);
         sensorFile.read(buffer, bufferSize);
+
+        newDataPoint.gradient = 1;
+
+        // Add the new DataPoint to the vector of data points for that sensor
+        dataPoints[sensorId]->push_back(newDataPoint);
       }
     }
+
+    free(buffer);
 
     // Close the file
     sensorFile.close();
 
     // This is where I would put the semaphore signal if we were using per-sensor file semaphores
   }
+}
+
+unsigned int DataSelector::selectDataPointsGradient(sensor_id_t sensorId, unsigned int numData, std::vector<DataPoint*>* tempDataPointList, unsigned int startInclusive, unsigned int endExclusive) {
+  double totalNewGradient = 0;
+    
+  for (unsigned int dataPointIndex = startInclusive; dataPointIndex < endExclusive; dataPointIndex++) {
+    totalNewGradient += (*dataPoints[sensorId])[dataPointIndex].gradient;
+  }
+
+  double newGradientSpacing = totalNewGradient / numData;
+
+  unsigned int numPointsSelected = 0;
+
+  bool allDataUsed = false;
+
+  for (unsigned int index = 1; index <= numData; index++) {
+    if (allDataUsed == true) {
+      break;
+    }
+
+    bool pointPicked = false;
+
+    double targetGradient = newGradientSpacing * index;
+
+    for (unsigned int dataPointIndex = startInclusive; dataPointIndex < endExclusive; dataPointIndex++) {
+      if (pointPicked == true || allDataUsed == true) {
+        break;
+      }
+
+      targetGradient -= (*dataPoints[sensorId])[dataPointIndex].gradient;
+
+      if (targetGradient <= 0) {
+        if ((*dataPoints[sensorId])[dataPointIndex].used == false) {
+          (*dataPoints[sensorId])[dataPointIndex].used = true;
+          tempDataPointList->push_back(&(*dataPoints[sensorId])[dataPointIndex]);
+          numPointsSelected++;
+        } else {
+          for (unsigned int retryIndex = 1; retryIndex < numData - 1; retryIndex++) {
+            unsigned int retryDataPointIndexUp = dataPointIndex + retryIndex;
+            unsigned int retryDataPointIndexDown = dataPointIndex - retryIndex;
+
+            if (retryDataPointIndexUp < endExclusive) {
+              if ((*dataPoints[sensorId])[retryDataPointIndexUp].used == false) {
+                (*dataPoints[sensorId])[retryDataPointIndexUp].used = true;
+                tempDataPointList->push_back(&(*dataPoints[sensorId])[retryDataPointIndexUp]);
+                numPointsSelected++;
+                pointPicked = true;
+                break;
+              }
+            }
+            
+            if (retryDataPointIndexDown >= startInclusive) {
+              if ((*dataPoints[sensorId])[retryDataPointIndexDown].used == false) {
+                (*dataPoints[sensorId])[retryDataPointIndexDown].used = true;
+                tempDataPointList->push_back(&(*dataPoints[sensorId])[retryDataPointIndexDown]);
+                numPointsSelected++;
+                pointPicked = true;
+                break;
+              }
+            }
+          }
+
+          if (!pointPicked) {
+            allDataUsed = true;
+          }
+        }
+      }
+    }
+  }
+
+  return numPointsSelected;
 }
 
 // Called by the packet building thread to select data points to include in the nexxt packet
@@ -140,44 +216,32 @@ std::vector<DataPoint*>* DataSelector::selectData() {
 
   // For every sensor
   for (auto [sensorId, sensorSettings] : sensors->sensorMap) {
+    unsigned int sensorDataSize = dataPoints[sensorId]->size();
 
     // Determine how much data for this sensor will be old or new data points
     unsigned int numOldData = 0;
     // Only if old data exists let any points be allocated to old data
-    if (lastDataPointUsedIndex[sensorId] >= 0) {
+    if (nextUnusedDataPointIndex[sensorId] > 0) {
       numOldData = pointsPerSensor[sensorId] * (1 - NEW_DATA_RATIO); // Calculate old data count before new data count to have the integer multiplication round down on old data, giving a round up on new data
     }
     unsigned int numNewData = pointsPerSensor[sensorId] - numOldData;
 
-    // Calculate the index increment to allow that number of data points to be evenly spaced across time (from the last used data point to the last recorded data point)
-    unsigned int newDataSpacing = (dataPoints[sensorId]->size() - lastDataPointUsedIndex[sensorId]) / numNewData;
-    newDataSpacing = std::max((unsigned int) 1, newDataSpacing);
+    // Pick new data points
 
-    // Iterate through the new data points using the calculated increment and add them to the temporary vector
-    unsigned int sensorDataSize = dataPoints[sensorId]->size();
-    unsigned int numNewDataPointsInluded = 0;
-    for (unsigned int dataPointIndex = sensorDataSize - 1; dataPointIndex > lastDataPointUsedIndex[sensorId]; dataPointIndex -= newDataSpacing) {
-      tempDataPointList[sensorId]->push_back(&(*dataPoints[sensorId])[dataPointIndex]);
-      numNewDataPointsInluded++;
+    unsigned int numSelected = selectDataPointsGradient(sensorId, numNewData, tempDataPointList[sensorId], nextUnusedDataPointIndex[sensorId], sensorDataSize - 1);
+
+    if (numSelected != numNewData) {
+      numOldData = pointsPerSensor[sensorId] - numSelected;
     }
 
-    // If for whatever reason the target number of new points couldn't be reached (not enough new points to select that many)
-    if (numNewDataPointsInluded != numNewData) {
-      // Allocate the unused space to old points to reduce wasted space
-      numOldData = pointsPerSensor[sensorId] - numNewDataPointsInluded;
-    }
-    
-    // Calculate the index increment to allow that number of data points to be evenly spaced across time (from the first recorded data point to the last used data point)
-    unsigned int oldDataSpacing = lastDataPointUsedIndex[sensorId] / numOldData;
-    oldDataSpacing = std::max((unsigned int) 1, oldDataSpacing);
+    // Pick old data points
 
-    // Iterate through the old data points using the calculated increment and add them to the temporary vector
-    for (unsigned int dataPointIndex = oldDataSpacing / 2; dataPointIndex < lastDataPointUsedIndex[sensorId]; dataPointIndex += oldDataSpacing) {
-      tempDataPointList[sensorId]->push_back(&(*dataPoints[sensorId])[dataPointIndex]);
-    }
+    selectDataPointsGradient(sensorId, numOldData, tempDataPointList[sensorId], 0, nextUnusedDataPointIndex[sensorId]);
   }
 
-  // Make a temporary unordered map of integers to track the last used data point from each sensor's temporary vector
+  // Compile the temporary vectors into a single vector
+
+  // Make a temporary unordered map of integers to track the next unused data point from each sensor's temporary vector
   std::unordered_map<sensor_id_t, unsigned int> nextPointPerSensor;
   for (auto [sensorId, sensorSettings] : sensors->sensorMap) {
     // Initialize the value to 0
@@ -226,6 +290,12 @@ std::vector<DataPoint*>* DataSelector::selectData() {
   // Track the currently generated list of data points
   currentData = dataPointList;
 
+  // Unmark all data points that were used to build this packet
+  unsigned int dataPointListSize = dataPointList->size();
+  for (unsigned int dataPointListIndex = 0; dataPointListIndex < dataPointListSize; dataPointListIndex++) {
+    (*dataPointList)[dataPointListIndex]->used = false;
+  }
+
   // Return the list
   return dataPointList;
 }
@@ -245,10 +315,10 @@ void DataSelector::markUsed() {
     for (unsigned int sensorDataIndex; sensorDataIndex < sensorDataSize; sensorDataIndex++) {
       // If the pointers match, then the object has been found
       if ((void*) &((*dataPoints[targetDataPoint->sensor_id])[sensorDataIndex]) == (void*) targetDataPoint) {
-        // If the index of the removed point was greater than the last used data point from this sensor
-        if (sensorDataIndex > lastDataPointUsedIndex[targetDataPoint->sensor_id]) {
-          // Update the last used data point index for this sensor
-          lastDataPointUsedIndex[targetDataPoint->sensor_id] = sensorDataIndex;
+        // If the index of the removed point was greater than the next unused data point from this sensor
+        if (sensorDataIndex >= nextUnusedDataPointIndex[targetDataPoint->sensor_id]) {
+          // Update the next unused data point index for this sensor
+          nextUnusedDataPointIndex[targetDataPoint->sensor_id] = sensorDataIndex + 1;
         }
 
         // If the number of times that this data point has been used exceeds the configured limit
@@ -258,8 +328,8 @@ void DataSelector::markUsed() {
           std::advance(sensorDataIterator, sensorDataIndex);
           dataPoints[targetDataPoint->sensor_id]->erase(sensorDataIterator);
 
-          // Decrement the last used data point index for this sensor to account for the deleted item
-          lastDataPointUsedIndex[targetDataPoint->sensor_id] -= 1;
+          // Decrement the next unused data point index for this sensor to account for the deleted item
+          nextUnusedDataPointIndex[targetDataPoint->sensor_id] -= 1;
         }
         
         // Exit the inner loop

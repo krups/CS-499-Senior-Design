@@ -1,3 +1,4 @@
+#include <cstring>
 #include <vector>
 #include <unordered_map>
 #include <fstream>
@@ -16,6 +17,7 @@ class DataSelector {
 
   private:
     void updateDataPoints();
+    unsigned int selectDataPointsGradient(sensor_id_t sensorId, unsigned int numData, std::vector<DataPoint*>* tempDataPointList, unsigned int start, unsigned int end);
 
     SensorMap* sensors;
     
@@ -26,6 +28,6 @@ class DataSelector {
     std::vector<DataPoint*>* previousData;
 
     std::unordered_map<sensor_id_t, std::vector<DataPoint>*> dataPoints;
-    std::unordered_map<sensor_id_t, unsigned int> lastDataPointUsedIndex;
+    std::unordered_map<sensor_id_t, unsigned int> nextUnusedDataPointIndex;
 
 };
