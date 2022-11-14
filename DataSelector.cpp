@@ -83,6 +83,8 @@ void DataSelector::updateDataPoints() {
       }
     }
 
+    free(buffer);
+
     // Close the file
     sensorFile.close();
 
@@ -219,7 +221,7 @@ std::vector<DataPoint*>* DataSelector::selectData() {
     // Determine how much data for this sensor will be old or new data points
     unsigned int numOldData = 0;
     // Only if old data exists let any points be allocated to old data
-    if (nextUnusedDataPointIndex[sensorId] >= 0) {
+    if (nextUnusedDataPointIndex[sensorId] > 0) {
       numOldData = pointsPerSensor[sensorId] * (1 - NEW_DATA_RATIO); // Calculate old data count before new data count to have the integer multiplication round down on old data, giving a round up on new data
     }
     unsigned int numNewData = pointsPerSensor[sensorId] - numOldData;
@@ -239,7 +241,7 @@ std::vector<DataPoint*>* DataSelector::selectData() {
 
   // Compile the temporary vectors into a single vector
 
-  // Make a temporary unordered map of integers to track the last used data point from each sensor's temporary vector
+  // Make a temporary unordered map of integers to track the next unused data point from each sensor's temporary vector
   std::unordered_map<sensor_id_t, unsigned int> nextPointPerSensor;
   for (auto [sensorId, sensorSettings] : sensors->sensorMap) {
     // Initialize the value to 0
@@ -313,10 +315,10 @@ void DataSelector::markUsed() {
     for (unsigned int sensorDataIndex; sensorDataIndex < sensorDataSize; sensorDataIndex++) {
       // If the pointers match, then the object has been found
       if ((void*) &((*dataPoints[targetDataPoint->sensor_id])[sensorDataIndex]) == (void*) targetDataPoint) {
-        // If the index of the removed point was greater than the last used data point from this sensor
-        if (sensorDataIndex > nextUnusedDataPointIndex[targetDataPoint->sensor_id]) {
-          // Update the last used data point index for this sensor
-          nextUnusedDataPointIndex[targetDataPoint->sensor_id] = sensorDataIndex;
+        // If the index of the removed point was greater than the next unused data point from this sensor
+        if (sensorDataIndex >= nextUnusedDataPointIndex[targetDataPoint->sensor_id]) {
+          // Update the next unused data point index for this sensor
+          nextUnusedDataPointIndex[targetDataPoint->sensor_id] = sensorDataIndex + 1;
         }
 
         // If the number of times that this data point has been used exceeds the configured limit
@@ -326,7 +328,7 @@ void DataSelector::markUsed() {
           std::advance(sensorDataIterator, sensorDataIndex);
           dataPoints[targetDataPoint->sensor_id]->erase(sensorDataIterator);
 
-          // Decrement the last used data point index for this sensor to account for the deleted item
+          // Decrement the next unused data point index for this sensor to account for the deleted item
           nextUnusedDataPointIndex[targetDataPoint->sensor_id] -= 1;
         }
         
