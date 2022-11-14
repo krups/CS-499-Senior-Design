@@ -210,10 +210,11 @@ std::vector<DataPoint*>* DataSelector::selectData() {
                 pointPicked = true;
                 break;
               }
-            } else {
-              allNewDataUsed = true;
-              break;
             }
+          }
+
+          if (!pointPicked) {
+            allNewDataUsed = true;
           }
         }
       }
@@ -275,10 +276,11 @@ std::vector<DataPoint*>* DataSelector::selectData() {
                 pointPicked = true;
                 break;
               }
-            } else {
-              allOldDataUsed = true;
-              break;
             }
+          }
+
+          if (!pointPicked) {
+            allOldDataUsed = true;
           }
         }
       }
