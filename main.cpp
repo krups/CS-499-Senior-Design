@@ -89,7 +89,7 @@ void *PackagingThread(void *arguments)
     std::vector<DataPoint *> dataList;
     std::ifstream sensorFile;
     uint8_t * buffer;
-    uint8_t * newPacket;
+    uint8_t * newPacket = (uint8_t*) malloc (PACKET_SIZE);
 
     // Constantly create new packets
     while (true)
@@ -116,17 +116,17 @@ void *PackagingThread(void *arguments)
                 sensorFile.seekg(dataInfo->fileIndex);
 
                 // Find the number of bytes for that type
-                int numBits = sensors[dataInfo->sensor_id].numBitsPerDataPoint();
+                int numBits = sensors.sensorMap[dataInfo->sensor_id]->numBitsPerDataPoint;
                 int numBytes = ceil(numBits/8.0);
 
                 // Read the bytes
                 buffer = (uint8_t*) malloc (numBytes);
-                sensorFile.read(buffer, numBytes);
+                    sensorFile.read((char*) buffer, numBytes);
                 if (!sensorFile)
                     std::cout << "ERROR: only " << sensorFile.gcount() << "bytes could be read";
 
                 // Add to the packet
-                CopyBitsB(buffer, 0, newPacket, startingPos, numBits);
+                    copyBitsB(buffer, 0, newPacket, startingPos, numBits);
                 startingPos += numBits;
 
                 // Clean up
@@ -151,8 +151,7 @@ void *PackagingThread(void *arguments)
             dataUsed = false;
         }
 
-        // Write new packet
-        copyBitsB(newPacket, 0, packetBuffer, 0, PACKET_SIZE); 
+            copyBitsB(newPacket, 0, (uint8_t*) packetBuffer, 0, PACKET_SIZE); 
 
 #ifdef PACKET_P  // Print the packet for debugging
         printf("Generated packet: %s\n", packetBuffer);
@@ -160,7 +159,8 @@ void *PackagingThread(void *arguments)
         // Release packet buffer
         sem_post(&packetSem);
     } // end while(true)
-
+    
+    free(newPacket);
     return NULL;
 } // end PackagingThread
 
