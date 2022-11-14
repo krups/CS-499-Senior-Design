@@ -27,6 +27,6 @@ class DataSelector {
     std::vector<DataPoint*>* previousData;
 
     std::unordered_map<sensor_id_t, std::vector<DataPoint>*> dataPoints;
-    std::unordered_map<sensor_id_t, unsigned int> lastDataPointUsedIndex;
+    std::unordered_map<sensor_id_t, unsigned int> nextUnusedDataPointIndex;
 
 };
