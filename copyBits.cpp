@@ -39,12 +39,3 @@ void copyBitsL2B(uint8_t* src, unsigned int srcStartBit, unsigned int srcSizeByt
         dst[dstPos / 8] |= (desiredBit >> (dstPos % 8));
     }
 }
-
-void writeZeros(uint8_t* dst, unsigned int dstStartBit, unsigned int n) {
-    for (unsigned int i = 0; i < n; i++) {
-        int dstPos = dstStartBit + i;
-        uint8_t desiredBit = 0;
-        dst[dstPos / 8] &= ~(1 << (7 - (dstPos % 8)));
-        dst[dstPos / 8] |= (desiredBit >> (dstPos % 8));
-    }
-}
