@@ -18,6 +18,7 @@ class DataSelector {
   private:
     void updateDataPoints();
     unsigned int selectDataPointsGradient(sensor_id_t sensorId, unsigned int numData, std::vector<DataPoint*>* tempDataPointList, unsigned int start, unsigned int end, float offset);
+    unsigned int selectDataPointsIndex(sensor_id_t sensorId, unsigned int numData, std::vector<DataPoint*>* tempDataPointList, unsigned int start, unsigned int end, float offset);
 
     SensorMap* sensors;
     

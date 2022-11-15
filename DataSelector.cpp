@@ -167,6 +167,22 @@ unsigned int DataSelector::selectDataPointsGradient(sensor_id_t sensorId, unsign
   return numPointsSelected;
 }
 
+unsigned int DataSelector::selectDataPointsIndex(sensor_id_t sensorId, unsigned int numData, std::vector<DataPoint*>* tempDataPointList, unsigned int start, unsigned int end, float offset) {
+  // Calculate the index increment to allow that number of data points to be evenly spaced across time (from the last used data point to the last recorded data point)
+  unsigned int dataSpacing = (end - start) / numData;
+  dataSpacing = std::max((unsigned int) 1, dataSpacing);
+
+  unsigned int numPointsSelected = 0;
+
+  // Iterate through the new data points using the calculated increment and add them to the temporary vector
+  for (unsigned int dataPointIndex = start + dataSpacing * offset; dataPointIndex < end; dataPointIndex += dataSpacing) {
+    tempDataPointList->push_back(&(*dataPoints[sensorId])[dataPointIndex]);
+    numPointsSelected++;
+  }
+
+  return numPointsSelected;
+}
+
 // Called by the packet building thread to select data points to include in the nexxt packet
 std::vector<DataPoint*>* DataSelector::selectData() {
   // First, update the vectors of data points that are tracked in memory and used for data selection
@@ -230,17 +246,28 @@ std::vector<DataPoint*>* DataSelector::selectData() {
     }
     unsigned int numNewData = pointsPerSensor[sensorId] - numOldData;
 
+    // Track the number of data points selected
+    unsigned int numSelected = 0;
+
     // Pick new data points
+    if (NEW_DATA_GRADIENT_SELECT) {
+      numSelected = selectDataPointsGradient(sensorId, numNewData, tempDataPointList[sensorId], nextUnusedDataPointIndex[sensorId], sensorDataSize, 1.0);
+    } else {
+      numSelected = selectDataPointsIndex(sensorId, numNewData, tempDataPointList[sensorId], nextUnusedDataPointIndex[sensorId], sensorDataSize, 1.0);
+    }
 
-    unsigned int numSelected = selectDataPointsGradient(sensorId, numNewData, tempDataPointList[sensorId], nextUnusedDataPointIndex[sensorId], sensorDataSize - 1, 1.0);
-
+    // If the number of new points picked doesn't match the expected number
     if (numSelected != numNewData) {
+      // Allocate any remaining points to old data to fill as much space as possible
       numOldData = pointsPerSensor[sensorId] - numSelected;
     }
 
     // Pick old data points
-
-    selectDataPointsGradient(sensorId, numOldData, tempDataPointList[sensorId], 0, nextUnusedDataPointIndex[sensorId], 0.5);
+    if (OLD_DATA_GRADIENT_SELECT) {
+      numSelected = selectDataPointsGradient(sensorId, numOldData, tempDataPointList[sensorId], 0, nextUnusedDataPointIndex[sensorId], 0.5);
+    } else {
+      numSelected = selectDataPointsIndex(sensorId, numOldData, tempDataPointList[sensorId], 0, nextUnusedDataPointIndex[sensorId], 0.5);
+    }
   }
 
   // Compile the temporary vectors into a single vector

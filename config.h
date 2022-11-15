@@ -48,6 +48,9 @@ const std::string SENSOR_DATA_PATH = "./data/"; // This directory must exist bef
 #define NEW_DATA_RATIO 0.8
 #define POINT_INCLUDE_LIMIT 1
 
+#define NEW_DATA_GRADIENT_SELECT true
+#define OLD_DATA_GRADIENT_SELECT true
+
 #define DEBUG // comment/uncomment to enable/disable debugging logs
 #ifdef DEBUG
 // #define PRINT_DATA 
