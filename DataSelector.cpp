@@ -92,14 +92,14 @@ void DataSelector::updateDataPoints() {
   }
 }
 
-unsigned int DataSelector::selectDataPointsGradient(sensor_id_t sensorId, unsigned int numData, std::vector<DataPoint*>* tempDataPointList, unsigned int startInclusive, unsigned int endExclusive) {
-  double totalNewGradient = 0;
+unsigned int DataSelector::selectDataPointsGradient(sensor_id_t sensorId, unsigned int numData, std::vector<DataPoint*>* tempDataPointList, unsigned int startInclusive, unsigned int endExclusive, float offset) {
+  double totalGradient = 0;
     
   for (unsigned int dataPointIndex = startInclusive; dataPointIndex < endExclusive; dataPointIndex++) {
-    totalNewGradient += (*dataPoints[sensorId])[dataPointIndex].gradient;
+    totalGradient += (*dataPoints[sensorId])[dataPointIndex].gradient;
   }
 
-  double newGradientSpacing = totalNewGradient / numData;
+  double gradientSpacing = totalGradient / numData;
 
   unsigned int numPointsSelected = 0;
 
@@ -112,14 +112,18 @@ unsigned int DataSelector::selectDataPointsGradient(sensor_id_t sensorId, unsign
 
     bool pointPicked = false;
 
-    double targetGradient = newGradientSpacing * index;
+    double targetGradient = (gradientSpacing * offset) + (gradientSpacing * index);
 
     for (unsigned int dataPointIndex = startInclusive; dataPointIndex < endExclusive; dataPointIndex++) {
       if (pointPicked == true || allDataUsed == true) {
         break;
       }
 
-      targetGradient -= (*dataPoints[sensorId])[dataPointIndex].gradient;
+      if (index == numData && dataPointIndex == (endExclusive - 1)) {
+        targetGradient = 0; // Address rounding errors to make sure the last point is always picked
+      } else {
+        targetGradient -= (*dataPoints[sensorId])[dataPointIndex].gradient;
+      }
 
       if (targetGradient <= 0) {
         if ((*dataPoints[sensorId])[dataPointIndex].used == false) {
@@ -228,7 +232,7 @@ std::vector<DataPoint*>* DataSelector::selectData() {
 
     // Pick new data points
 
-    unsigned int numSelected = selectDataPointsGradient(sensorId, numNewData, tempDataPointList[sensorId], nextUnusedDataPointIndex[sensorId], sensorDataSize - 1);
+    unsigned int numSelected = selectDataPointsGradient(sensorId, numNewData, tempDataPointList[sensorId], nextUnusedDataPointIndex[sensorId], sensorDataSize - 1, 1.0);
 
     if (numSelected != numNewData) {
       numOldData = pointsPerSensor[sensorId] - numSelected;
@@ -236,7 +240,7 @@ std::vector<DataPoint*>* DataSelector::selectData() {
 
     // Pick old data points
 
-    selectDataPointsGradient(sensorId, numOldData, tempDataPointList[sensorId], 0, nextUnusedDataPointIndex[sensorId]);
+    selectDataPointsGradient(sensorId, numOldData, tempDataPointList[sensorId], 0, nextUnusedDataPointIndex[sensorId], 0.5);
   }
 
   // Compile the temporary vectors into a single vector
