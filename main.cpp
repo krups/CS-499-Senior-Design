@@ -209,7 +209,7 @@ void *IOThread(void *arguments)
                     path += packetFileName;
 
                     //packetDataFile.open(path, std::ios_base::app);
-                    packetDataFile = fopen(path.c_str(), 'w');
+                    packetDataFile = fopen(path.c_str(), "w");
                     if (packetDataFile != NULL)
                     {
                         sem_wait(&packetSem);
@@ -227,7 +227,7 @@ void *IOThread(void *arguments)
 			            printf("Open: %s failed!\n", path.c_str());
 #endif
 		            }
-    		        packetDataFile.close();
+    		        fclose(packetDataFile);
                 }
                 // Otherwise, save data
                 else
