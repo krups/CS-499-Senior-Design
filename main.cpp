@@ -209,7 +209,7 @@ void *IOThread(void *arguments)
                     path += packetFileName;
 
                     //packetDataFile.open(path, std::ios_base::app);
-                    packetDataFile = fopen(path, 'w');
+                    packetDataFile = fopen(path.c_str(), 'w');
                     if (packetDataFile != NULL)
                     {
                         sem_wait(&packetSem);
