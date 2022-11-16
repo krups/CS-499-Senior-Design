@@ -197,7 +197,7 @@ void *IOThread(void *arguments)
                     printf("PACKET REQUEST RECEIVED:\n");
 #endif
 #ifdef PACKET_P
-                    printf("Generated packet: %s\n", packetBuffer);
+                    printf("Sent packet: %s\n", packetBuffer);
 #endif
                     serialPuts(fd, packetBuffer);
                     sem_post(&packetSem);
