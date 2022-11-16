@@ -203,12 +203,14 @@ void *IOThread(void *arguments)
                     sem_post(&packetSem);
 
                     // Save sent packet
-                    std::ofstream packetDataFile;
+                    //std::ofstream packetDataFile;
+                    FILE* packetDataFile;
                     std::string path = PACKET_DATA_PATH;
                     path += packetFileName;
 
-                    packetDataFile.open(path, std::ios_base::app);
-                    if (!packetDataFile.fail())
+                    //packetDataFile.open(path, std::ios_base::app);
+                    packetDataFile = fopen(path, 'w');
+                    if (packetDataFile != NULL)
                     {
                         sem_wait(&packetSem);
                         // Writes 1 packet of size PACKET_SIZE from packetBuffer to packetDataFile
