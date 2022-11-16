@@ -183,17 +183,22 @@ void *IOThread(void *arguments)
                 code += line[x];
                 x++;
             }
+#ifdef DEBUG_P
             printf("CODE: %s\n", code.c_str());
             printf("CODE to INT: %d\n", stoi(code));
-
+#endif
             // Return most recent packet if command
             try
             {
                 if (stoi(code) == PACKET_REQUEST)
                 {
                     sem_wait(&packetSem);
+#ifdef DEBUG_P
                     printf("PACKET REQUEST RECEIVED:\n");
+#endif
+#ifdef PACKET_P
                     printf("Generated packet: %s\n", packetBuffer);
+#endif
                     serialPuts(fd, packetBuffer);
                     sem_post(&packetSem);
 
@@ -208,7 +213,7 @@ void *IOThread(void *arguments)
                         sem_wait(&packetSem);
                         // Writes 1 packet of size PACKET_SIZE from packetBuffer to packetDataFile
                         fwrite(packetBuffer, PACKET_SIZE, 1, packetDataFile);
-#ifdef PRINT_DATA
+#ifdef PACKET_P
 			            printf("Saved packet %s to file!\n", packetBuffer);
 #endif
                     sem_post(&packetSem);
@@ -216,7 +221,7 @@ void *IOThread(void *arguments)
                     }
                     else
                     {
-#ifdef PRINT_DATA
+#ifdef DEBUG_P
 			            printf("Open: %s failed!\n", path.c_str());
 #endif
 		            }
@@ -243,7 +248,7 @@ void *IOThread(void *arguments)
             } // end try
             catch(const std::exception& e)
             {
-#ifdef DEBUG
+#ifdef DEBUG_P
                     printf("Invalid code received\n");
 #endif
             }
