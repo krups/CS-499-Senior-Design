@@ -187,57 +187,67 @@ void *IOThread(void *arguments)
             printf("CODE to INT: %d\n", stoi(code));
 
             // Return most recent packet if command
-            if (stoi(code) == PACKET_REQUEST)
+            try
             {
-                sem_wait(&packetSem);
-                printf("PACKET REQUEST RECEIVED:\n");
-                printf("Generated packet: %s\n", packetBuffer);
-                serialPuts(fd, packetBuffer);
-                sem_post(&packetSem);
+                if (stoi(code) == PACKET_REQUEST)
+                {
+                    sem_wait(&packetSem);
+                    printf("PACKET REQUEST RECEIVED:\n");
+                    printf("Generated packet: %s\n", packetBuffer);
+                    serialPuts(fd, packetBuffer);
+                    sem_post(&packetSem);
 
-		// Save sent packet
-		std::ofstream packetDataFile;
-		std::string path = PACKET_DATA_PATH;
-		path += packetFileName;
+                    // Save sent packet
+                    std::ofstream packetDataFile;
+                    std::string path = PACKET_DATA_PATH;
+                    path += packetFileName;
 
-		packetDataFile.open(path, std::ios_base::app);
-		if (!packetDataFile.fail())
-		{
-			sem_wait(&packetSem);
-			// Writes 1 packet of size PACKET_SIZE from packetBuffer to packetDataFile
-			fwrite(packetBuffer, PACKET_SIZE, 1, packetDataFile);
+                    packetDataFile.open(path, std::ios_base::app);
+                    if (!packetDataFile.fail())
+                    {
+                        sem_wait(&packetSem);
+                        // Writes 1 packet of size PACKET_SIZE from packetBuffer to packetDataFile
+                        fwrite(packetBuffer, PACKET_SIZE, 1, packetDataFile);
 #ifdef PRINT_DATA
-			printf("Saved packet %s to file!\n", packetBuffer);
+			            printf("Saved packet %s to file!\n", packetBuffer);
 #endif
-			sem_post(&packetSem);
-			packetFileName++;
-		}
-		else
-		{
+                    sem_post(&packetSem);
+                    packetFileName++;
+                    }
+                    else
+                    {
 #ifdef PRINT_DATA
-			printf("Open: %s failed!\n", path.c_str());
+			            printf("Open: %s failed!\n", path.c_str());
 #endif
-		}
-    		packetDataFile.close();
+		            }
+    		        packetDataFile.close();
+                }
+                // Otherwise, save data
+                else
+                {
+
+#ifdef PRINT_DATA
+                    printf("%s\n", line);
+#endif
+
+                    // Write to the sensor data file
+                    Data datum(line);
+                    sem_wait(&sensor1Sem);
+
+                    // Save data after checking validity
+                    if (checkValid(datum))
+                        saveData(datum);
+
+                    sem_post(&sensor1Sem);
+                } // end else
+            } // end try
+            catch(const std::exception& e)
+            {
+#ifdef DEBUG
+                    printf("Invalid code received\n");
+#endif
             }
-            // Otherwise, save data
-            else
-            {
-
-#ifdef PRINT_DATA
-                printf("%s\n", line);
-#endif
-
-                // Write to the sensor data file
-                Data datum(line);
-                sem_wait(&sensor1Sem);
-
-                // Save data after checking validity
-                if (checkValid(datum))
-                    saveData(datum);
-
-                sem_post(&sensor1Sem);
-            } // end else
+            
             // Reset variables
             pos = 0;
             code = "";
