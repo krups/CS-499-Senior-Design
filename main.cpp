@@ -89,7 +89,7 @@ void *PackagingThread(void *arguments)
     std::vector<DataPoint *> dataList;
     std::ifstream sensorFile;
     uint8_t * buffer;
-    uint8_t * newPacket = (uint8_t*) malloc (PACKET_SIZE);
+    uint8_t newPacket[PACKET_SIZE];
 
     // Constantly create new packets
     while (true)
@@ -156,7 +156,7 @@ void *PackagingThread(void *arguments)
 
         // If there was new data, write new packet
         if (!dataList.empty()) {
-            copyBitsB(newPacket, 0, (uint8_t*) packetBuffer, 0, PACKET_SIZE); 
+            memcpy(packetBuffer, newPacket, PACKET_SIZE);
         }
         
 
