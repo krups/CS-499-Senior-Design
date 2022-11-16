@@ -31,6 +31,7 @@ const std::string PACKET_DATA_PATH = "./data/packets/" // This directory must ex
 // #define PRINT_DATA 
 #define PACKET_P
 #define VALIDITY_P
+// #define DEBUG_P
 #endif
 
 // Validity parameters
