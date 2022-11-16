@@ -206,7 +206,7 @@ void *IOThread(void *arguments)
                     //std::ofstream packetDataFile;
                     FILE* packetDataFile;
                     std::string path = PACKET_DATA_PATH;
-                    path += packetFileName;
+                    path += std::to_string(packetFileName);
 
                     //packetDataFile.open(path, std::ios_base::app);
                     packetDataFile = fopen(path.c_str(), "w");
@@ -218,8 +218,8 @@ void *IOThread(void *arguments)
 #ifdef PACKET_P
 			            printf("Saved packet %s to file!\n", packetBuffer);
 #endif
-                    sem_post(&packetSem);
-                    packetFileName++;
+                        sem_post(&packetSem);
+                        packetFileName++;
                     }
                     else
                     {
