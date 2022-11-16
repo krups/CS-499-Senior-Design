@@ -14,6 +14,7 @@
 #include "data.h"
 #include "serial_headers.h"
 #include "DataSelector.h"
+#include "copyBits.h"
 
 char packetBuffer[PACKET_SIZE];
 bool dataUsed = false;
@@ -87,56 +88,86 @@ void *PackagingThread(void *arguments)
     DataSelector dataSelector(&sensors);
     std::vector<DataPoint *> dataList;
     std::ifstream sensorFile;
-    std::string data;
+    uint8_t * buffer;
+    uint8_t newPacket[PACKET_SIZE];
 
+    // Constantly create new packets
     while (true)
     {
-        std::string packet;
+        // Initialize newPacket to zeros
+        memset(newPacket, '\0', PACKET_SIZE);
 
         // Select data
         dataList = *dataSelector.selectData();
 
-        // Read each data point from sensor file
-        for (DataPoint *dataInfo : dataList)
-        {
-            sem_wait(&sensor1Sem);
-
-            std::string path = SENSOR_DATA_PATH;
-            path += std::to_string(dataInfo->sensor_id);
-            sensorFile.open(path, std::ios_base::binary);
-
-            if (sensorFile.is_open())
+        // If there was data, create a new packet
+        if (!dataList.empty()) {
+            // Read each data point from sensor file
+            int startingPos = 0;
+            for (DataPoint *dataInfo : dataList)
             {
-                sensorFile.seekg(dataInfo->fileIndex);
-                getline(sensorFile, data);
-                packet += data;
-                sensorFile.close();
-            }
-            else
-            {
-                std::cout << "ERROR: could not open " << path << std::endl;
-            }
+                // Open the sensor file
+                sem_wait(&sensor1Sem);
+                std::string path = SENSOR_DATA_PATH;
+                path += std::to_string(dataInfo->sensor_id);
+                sensorFile.open(path, std::ios_base::binary);
 
-            sem_post(&sensor1Sem);
+                if (sensorFile.is_open())
+                {
+                    // Go to the line
+                    sensorFile.seekg(dataInfo->fileIndex);
+
+                    // Find the number of bytes for that type
+                    int numBits = sensors.sensorMap[dataInfo->sensor_id]->numBitsPerDataPoint;
+                    int numBytes = ceil(numBits/8.0);
+
+                    // Read the bytes
+                    buffer = (uint8_t*) malloc (numBytes);
+                    sensorFile.read((char*) buffer, numBytes);
+                    if (!sensorFile)
+                        std::cout << "ERROR: only " << sensorFile.gcount() << "bytes could be read";
+
+                    // Add to the packet
+                    copyBitsB(buffer, 0, newPacket, startingPos, numBits);
+                    startingPos += numBits;
+
+                    // Clean up
+                    sensorFile.close();
+                    free(buffer);
+                }
+                else
+                {
+                    std::cout << "ERROR: could not open " << path << std::endl;
+                }
+
+                sem_post(&sensor1Sem);
+            }
         }
 
+        // Access packet buffer
         sem_wait(&packetSem);
 
-        // Check if previous packet was used
-        if (dataUsed)
+        // If the previous packet was used, mark data as sent
+        if (dataUsed) 
         {
-            dataSelector.markUsed(); // does this take parameters?
+            dataSelector.markUsed();
             dataUsed = false;
         }
 
-        // Put the new packet in the buffer
-        strncpy(packetBuffer, packet.c_str(), PACKET_SIZE);
-#ifdef PACKET_P
+        // If there was new data, write new packet
+        if (!dataList.empty()) {
+            memcpy(packetBuffer, newPacket, PACKET_SIZE);
+        }
+        
+
+#ifdef PACKET_P  // Print the packet for debugging
         printf("Generated packet: %s\n", packetBuffer);
 #endif
+        // Release packet buffer
         sem_post(&packetSem);
     } // end while(true)
-
+    
+    free(newPacket);
     return NULL;
 } // end PackagingThread
 
@@ -224,6 +255,9 @@ void *IOThread(void *arguments)
 
 int main()
 {
+    // Initialize packet buffer to zeros
+    memset(packetBuffer, '\0', PACKET_SIZE);
+
     // Active Sensors
     // Entries should be formatted: sensor_id, sensor_priority, num_samples_per_data_point, num_bits_per_sample
     sensors.addSensor(THERMOCOUPLE_ID, THERMOCOUPLE_PRIORITY, THERMOCOUPLE_NUM_SAMPLES_PER_DATA_POINT, THERMOCOUPLE_NUM_BITS_PER_SAMPLE);
