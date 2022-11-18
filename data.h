@@ -2,7 +2,10 @@
 #include <string.h>
 #include <vector>
 #include <iostream>
+#include <cmath>
 
+#include "Sensors.h"
+#include "copyBits.h"
 /**
  * @brief Class for sensor data
  *
@@ -10,12 +13,14 @@
 class Data
 {
 public:
-    Data(char *line);
+    Data(char *line, SensorMap *sensors);
     Data(const Data &x);
     int getType();
     int getNumVals();
+    int getNumBytes();
     u_int32_t getTimeStamp();
     std::vector<u_int16_t> getData();
+    void createBitBuffer(char* buf);
     void printData();
     friend std::ostream &operator<<(std::ostream &out, const Data &x);
 
@@ -23,5 +28,7 @@ private:
     int type;
     int num_vals;
     u_int32_t time_stamp;
+    int bits_per_sample;
+    int num_bytes;
     std::vector<u_int16_t> data;
 };

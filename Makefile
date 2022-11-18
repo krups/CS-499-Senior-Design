@@ -1,17 +1,21 @@
-FLAGS = -Wall -lwiringPi -pthread
+FLAGS = -g -Wall -lwiringPi -pthread -std=c++17
+test_f = -g -Wall -pthread -std=c++17
 GOAL = kaps
 
 run: $(GOAL)
 	sudo ./$(GOAL)
 
-kaps:
-	g++ -o $(GOAL) main.cpp data.cpp DataSelector.cpp $(FLAGS)
+kaps: main.cpp data.cpp DataSelector.cpp Sensors.cpp copyBits.cpp
+	g++ -o $(GOAL) $^ $(FLAGS)
 
 cleanData:
 	rm -rf ./data/*
 
-test: mainTest.cpp data.cpp
-	g++ -o test mainTest.cpp data.cpp -Wall -pthread
+test: test.cpp data.cpp Sensors.cpp copyBits.cpp
+	g++ -o test $^ $(test_f)
+
+decode: decode.cpp
+	g++ -o $(GOAL) $^ $(FLAGS)
 
 clean:
 	rm -f $(GOAL) a.out
