@@ -43,25 +43,33 @@ int main() {
     bitIndex += SENSOR_ID_BITS;
 
     if (sensorId != 0) {
-      std::cout << sensorId << ", ";
+      if (sensors.sensorMap[sensorId] != nullptr) {
+        std::cout << sensorId << ", ";
 
-      unsigned int timestamp = 0;
-      copyBitsB2L((uint8_t*) data, bitIndex, (uint8_t*) &sensorId, (sizeof(unsigned int) * 8) - SENSOR_TIMESTAMP_BITS, sizeof(unsigned int), SENSOR_TIMESTAMP_BITS);
-      bitIndex += SENSOR_TIMESTAMP_BITS;
+        unsigned int timestamp = 0;
+        copyBitsB2L((uint8_t*) data, bitIndex, (uint8_t*) &sensorId, (sizeof(unsigned int) * 8) - SENSOR_TIMESTAMP_BITS, sizeof(unsigned int), SENSOR_TIMESTAMP_BITS);
+        bitIndex += SENSOR_TIMESTAMP_BITS;
 
-      std::cout << timestamp << ", ";
-      
-      for (int i = 0; i < sensors.sensorMap[sensorId]->numSamplesPerDataPoint; i++) {
-        unsigned int value = 0;
+        std::cout << timestamp << ", ";
+        
+        for (int i = 0; i < sensors.sensorMap[sensorId]->numSamplesPerDataPoint; i++) {
+          unsigned int value = 0;
 
-        copyBitsB2L((uint8_t*) data, bitIndex, (uint8_t*) &value, (sizeof(unsigned int) * 8) - sensors.sensorMap[sensorId]->numBitsPerSample, sizeof(unsigned int), sensors.sensorMap[sensorId]->numBitsPerSample);
-        bitIndex += sensors.sensorMap[sensorId]->numBitsPerSample;
+          copyBitsB2L((uint8_t*) data, bitIndex, (uint8_t*) &value, (sizeof(unsigned int) * 8) - sensors.sensorMap[sensorId]->numBitsPerSample, sizeof(unsigned int), sensors.sensorMap[sensorId]->numBitsPerSample);
+          bitIndex += sensors.sensorMap[sensorId]->numBitsPerSample;
 
-        std::cout << value << ", ";
+          std::cout << value << ", ";
+        }
+
+        std::cout << std::endl;
+      } else {
+        std::cout << "Unknown sensor type" << std::endl;
+
+        moreData = false;
       }
-
-      std::cout << std::endl;
     } else {
+      std::cout << "End of packet" << std::endl;
+
       moreData = false;
     }
   }
