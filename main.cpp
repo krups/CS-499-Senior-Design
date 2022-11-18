@@ -134,7 +134,7 @@ void *PackagingThread(void *arguments)
                     buffer = (uint8_t *)malloc(numBytes);
                     sensorFile.read((char *)buffer, numBytes);
                     if (!sensorFile)
-                        std::cout << "ERROR: only " << sensorFile.gcount() << "bytes could be read\n";
+                        std::cout << "ERROR: only " << sensorFile.gcount() << " bytes could be read\n";
                     else {
                         // Add to the packet
                         copyBitsB(buffer, 0, newPacket, startingPos, numBits);
