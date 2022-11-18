@@ -21,6 +21,7 @@
 
 // Sensor ID Config
 const std::string SENSOR_DATA_PATH = "./data/"; // This directory must exist before running the program
+const std::string PACKET_DATA_PATH = "./data/packets/"; // This directory must exist before running the program
 
 #define TC_ID 1
 #define TC_PRIORITY 1
@@ -78,6 +79,7 @@ const std::string SENSOR_DATA_PATH = "./data/"; // This directory must exist bef
 // #define PRINT_DATA
 #define PACKET_P
 #define VALIDITY_P
+// #define DEBUG_P
 #endif
 
 #endif

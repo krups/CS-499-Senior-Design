@@ -196,6 +196,8 @@ void *IOThread(void *arguments)
     int pos = 0;
     std::string code = "";
 
+    int packetFileName = 0;
+
     while (true)
     {
         // Gets the first int, converts to char
@@ -213,46 +215,89 @@ void *IOThread(void *arguments)
                 code += line[x];
                 x++;
             }
+#ifdef DEBUG_P
             printf("CODE: %s\n", code.c_str());
             printf("CODE to INT: %d\n", stoi(code));
-
+#endif
             // Return most recent packet if command
-            if (stoi(code) == PACKET_REQUEST)
+            try
             {
-                sem_wait(&packetSem);
-                // TODO: Send most recent packet
-                printf("PACKET REQUEST RECEIVED:\n");
-                printf("Generated packet: %s\n", packetBuffer);
-                serialPuts(fd, packetBuffer);
-                sem_post(&packetSem);
-            }
-            // Otherwise, save data
-            else
-            {
+                if (stoi(code) == PACKET_REQUEST)
+                {
+                    sem_wait(&packetSem);
+#ifdef DEBUG_P
+                    printf("PACKET REQUEST RECEIVED:\n");
+#endif
+#ifdef PACKET_P
+                    printf("Sent packet: %s\n", packetBuffer);
+#endif
+                    serialPuts(fd, packetBuffer);
+                    sem_post(&packetSem);
+
+                    // Save sent packet
+                    //std::ofstream packetDataFile;
+                    FILE* packetDataFile;
+                    std::string path = PACKET_DATA_PATH;
+                    path += std::to_string(packetFileName);
+
+                    //packetDataFile.open(path, std::ios_base::app);
+                    packetDataFile = fopen(path.c_str(), "w");
+                    if (packetDataFile != NULL)
+                    {
+                        sem_wait(&packetSem);
+                        // Writes 1 packet of size PACKET_SIZE from packetBuffer to packetDataFile
+                        fwrite(packetBuffer, PACKET_SIZE, 1, packetDataFile);
+#ifdef PACKET_P
+			            printf("Saved packet %s to file!\n", packetBuffer);
+#endif
+                        sem_post(&packetSem);
+                        packetFileName++;
+                    }
+                    else
+                    {
+#ifdef DEBUG_P
+			            printf("Open: %s failed!\n", path.c_str());
+#endif
+		            }
+    		        fclose(packetDataFile);
+                }
+                // Otherwise, save data
+                else
+                {
 
 #ifdef PRINT_DATA
-                printf("%s\n", line);
+                    printf("%s\n", line);
 #endif
-                try
-                {
-                    // Write to the sensor data file
-                    Data datum(line, &sensors);
-                    int size = datum.getNumBytes();
-                    char temp_buf[size];
-                    memset(&temp_buf, 0, size);
-                    datum.createBitBuffer(temp_buf);
-                    sem_wait(&sensor1Sem);
 
-                    // Save data after checking validity
-                    if (checkValid(datum))
-                        saveData(datum, temp_buf);
-                    sem_post(&sensor1Sem);
-                }
-                catch (std::string e)
-                {
-                    printf("%s\n", e.c_str());
-                }
-            } // end else
+                    try
+                    {
+                        // Write to the sensor data file
+                        Data datum(line, &sensors);
+                        int size = datum.getNumBytes();
+                        char temp_buf[size];
+                        memset(&temp_buf, 0, size);
+                        datum.createBitBuffer(temp_buf);
+
+                        sem_wait(&sensor1Sem);
+
+                        // Save data after checking validity
+                        if (checkValid(datum))
+                            saveData(datum, temp_buf);
+                        sem_post(&sensor1Sem);
+                    }
+                    catch (std::string e)
+                    {
+                        printf("%s\n", e.c_str());
+                    }
+                } // end else
+            } // end try
+            catch(const std::exception& e)
+            {
+#ifdef DEBUG_P
+                    printf("Invalid code received\n");
+#endif
+            }
+
             // Reset variables
             pos = 0;
             code = "";
