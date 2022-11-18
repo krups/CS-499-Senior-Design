@@ -130,6 +130,7 @@ unsigned int DataSelector::selectDataPointsGradient(sensor_id_t sensorId, unsign
           (*dataPoints[sensorId])[dataPointIndex].used = true;
           tempDataPointList->push_back(&(*dataPoints[sensorId])[dataPointIndex]);
           numPointsSelected++;
+          pointPicked = true;
         } else {
           for (unsigned int retryIndex = 1; retryIndex < numData - 1; retryIndex++) {
             unsigned int retryDataPointIndexUp = dataPointIndex + retryIndex;
@@ -161,6 +162,10 @@ unsigned int DataSelector::selectDataPointsGradient(sensor_id_t sensorId, unsign
           }
         }
       }
+    }
+
+    if (!pointPicked) {
+      allDataUsed = true;
     }
   }
 
