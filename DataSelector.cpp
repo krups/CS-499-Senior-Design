@@ -348,7 +348,7 @@ void DataSelector::markUsed() {
     
     // Loop through the vector of data points for the sensor that this data point is associated with to find the index of that data point
     unsigned int sensorDataSize = dataPoints[targetDataPoint->sensor_id]->size();
-    for (unsigned int sensorDataIndex; sensorDataIndex < sensorDataSize; sensorDataIndex++) {
+    for (unsigned int sensorDataIndex = 0; sensorDataIndex < sensorDataSize; sensorDataIndex++) {
       // If the pointers match, then the object has been found
       if ((void*) &((*dataPoints[targetDataPoint->sensor_id])[sensorDataIndex]) == (void*) targetDataPoint) {
         // If the index of the removed point was greater than the next unused data point from this sensor
@@ -360,8 +360,8 @@ void DataSelector::markUsed() {
         // If the number of times that this data point has been used exceeds the configured limit
         if (targetDataPoint->numIncludes > POINT_INCLUDE_LIMIT) {
           // Use the index that was counted while searching to remove the item from the vector of data points for that sensor
-          std::vector<DataPoint>::iterator sensorDataIterator = dataPoints[targetDataPoint->sensor_id]->begin();
-          std::advance(sensorDataIterator, sensorDataIndex);
+          std::vector<DataPoint>::iterator sensorDataIterator = dataPoints[targetDataPoint->sensor_id]->begin() + sensorDataIndex;
+          //std::advance(sensorDataIterator, sensorDataIndex);
           dataPoints[targetDataPoint->sensor_id]->erase(sensorDataIterator);
 
           // Decrement the next unused data point index for this sensor to account for the deleted item
