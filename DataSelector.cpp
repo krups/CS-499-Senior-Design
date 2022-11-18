@@ -25,15 +25,15 @@ DataSelector::DataSelector(SensorMap* sensors) {
 DataSelector::~DataSelector() {
   // Deallocate allocated memory
   for (auto [sensorId, sensorSettings] : sensors->sensorMap) {
-    free(dataPoints[sensorId]);
+    delete dataPoints[sensorId];
   }
 
   if (currentData != nullptr) {
-    free(currentData);
+    delete currentData;
   }
 
   if (previousData != nullptr) {
-    free(previousData);
+    delete previousData;
   }
 }
 
@@ -85,7 +85,7 @@ void DataSelector::updateDataPoints() {
       }
     }
 
-    free(buffer);
+    delete[] buffer;
 
     // Close the file
     sensorFile.close();
@@ -94,7 +94,7 @@ void DataSelector::updateDataPoints() {
   }
 }
 
-unsigned int DataSelector::selectDataPointsGradient(sensor_id_t sensorId, unsigned int numData, std::vector<DataPoint*>* tempDataPointList, unsigned int startInclusive, unsigned int endExclusive, double offset) {
+unsigned int DataSelector::selectDataPointsGradient(int sensorId, unsigned int numData, std::vector<DataPoint*>* tempDataPointList, unsigned int startInclusive, unsigned int endExclusive, double offset) {
   // Make sure that it doesn't try to select more data points than exist
   if ((endExclusive - startInclusive) < numData) {
     numData = endExclusive - startInclusive;
@@ -179,7 +179,7 @@ unsigned int DataSelector::selectDataPointsGradient(sensor_id_t sensorId, unsign
   return numPointsSelected;
 }
 
-unsigned int DataSelector::selectDataPointsIndex(sensor_id_t sensorId, unsigned int numData, std::vector<DataPoint*>* tempDataPointList, unsigned int startInclusive, unsigned int endExclusive, double offset) {
+unsigned int DataSelector::selectDataPointsIndex(int sensorId, unsigned int numData, std::vector<DataPoint*>* tempDataPointList, unsigned int startInclusive, unsigned int endExclusive, double offset) {
   // Make sure that it doesn't try to select more data points than exist
   if ((endExclusive - startInclusive) < numData) {
     numData = endExclusive - startInclusive;
@@ -211,18 +211,18 @@ std::vector<DataPoint*>* DataSelector::selectData() {
 
   // Track the previously generated vector of data points
   if (previousData != nullptr) {
-    free(previousData);
+    delete previousData;
   }
   previousData = currentData;
 
   // Make an unordered map of ints to track how many data points go to each sensor
-  std::unordered_map<sensor_id_t, unsigned int> pointsPerSensor;
+  std::unordered_map<int, unsigned int> pointsPerSensor;
   for (auto [sensorId, sensorSettings] : sensors->sensorMap) {
     pointsPerSensor[sensorId] = 0;
   }
 
   // Make an unordered map of ints to track which iteration the next data point should be added for each sensor
-  std::unordered_map<sensor_id_t, unsigned int> nextIterationPerSensor;
+  std::unordered_map<int, unsigned int> nextIterationPerSensor;
   for (auto [sensorId, sensorSettings] : sensors->sensorMap) {
     nextIterationPerSensor[sensorId] = 0;
   }
@@ -248,7 +248,7 @@ std::vector<DataPoint*>* DataSelector::selectData() {
   }
 
   // Create a temporary unordered map of vectors of all data points that are chosen for the next packet
-  std::unordered_map<sensor_id_t, std::vector<DataPoint*>*> tempDataPointList;
+  std::unordered_map<int, std::vector<DataPoint*>*> tempDataPointList;
   
   // Initialize the unordered map's vectors
   for (auto [sensorId, sensorSettings] : sensors->sensorMap) {
@@ -294,7 +294,7 @@ std::vector<DataPoint*>* DataSelector::selectData() {
   // Compile the temporary vectors into a single vector
 
   // Make a temporary unordered map of integers to track the next unused data point from each sensor's temporary vector
-  std::unordered_map<sensor_id_t, unsigned int> nextPointPerSensor;
+  std::unordered_map<int, unsigned int> nextPointPerSensor;
   for (auto [sensorId, sensorSettings] : sensors->sensorMap) {
     // Initialize the value to 0
     nextPointPerSensor[sensorId] = 0;
@@ -336,7 +336,7 @@ std::vector<DataPoint*>* DataSelector::selectData() {
 
   // Free allocated memory for temporary data point vectors for each sensor
   for (auto [sensorId, sensorSettings] : sensors->sensorMap) {
-    free(tempDataPointList[sensorId]);
+    delete tempDataPointList[sensorId];
   }
 
   // Track the currently generated list of data points

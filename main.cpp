@@ -261,6 +261,7 @@ void *IOThread(void *arguments)
 #endif
                         sem_post(&packetSem);
                         packetFileName++;
+                        fclose(packetDataFile);
                     }
                     else
                     {
@@ -268,7 +269,6 @@ void *IOThread(void *arguments)
 			            printf("Open: %s failed!\n", path.c_str());
 #endif
 		            }
-    		        fclose(packetDataFile);
                 }
                 // Otherwise, save data
                 else

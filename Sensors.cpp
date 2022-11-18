@@ -33,13 +33,13 @@ SensorMap::~SensorMap() {
   }
 }
 
-void SensorMap::addSensor(sensor_id_t id, uint8_t priority, uint8_t numSamplesPerDataPoint, uint8_t numBitsPerSample) {
+void SensorMap::addSensor(int id, uint8_t priority, uint8_t numSamplesPerDataPoint, uint8_t numBitsPerSample) {
   SensorSettings* newSensorSettings = new SensorSettings(priority, numSamplesPerDataPoint, numBitsPerSample);
   sensorMap[id] = newSensorSettings;
   sensorMapSize = sensorMap.size();
 }
 
-void SensorMap::addSensor(sensor_id_t id, uint8_t priority, uint8_t numSamplesPerDataPoint, uint8_t numBitsPerSample, int multiplier) {
+void SensorMap::addSensor(int id, uint8_t priority, uint8_t numSamplesPerDataPoint, uint8_t numBitsPerSample, int multiplier) {
   SensorSettings* newSensorSettings = new SensorSettings(priority, numSamplesPerDataPoint, numBitsPerSample, multiplier);
   sensorMap[id] = newSensorSettings;
   sensorMapSize = sensorMap.size();

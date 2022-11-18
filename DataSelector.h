@@ -17,18 +17,18 @@ class DataSelector {
 
   private:
     void updateDataPoints();
-    unsigned int selectDataPointsGradient(sensor_id_t sensorId, unsigned int numData, std::vector<DataPoint*>* tempDataPointList, unsigned int startInclusive, unsigned int endExclusive, double offset);
-    unsigned int selectDataPointsIndex(sensor_id_t sensorId, unsigned int numData, std::vector<DataPoint*>* tempDataPointList, unsigned int startInclusive, unsigned int endExclusive, double offset);
+    unsigned int selectDataPointsGradient(int sensorId, unsigned int numData, std::vector<DataPoint*>* tempDataPointList, unsigned int startInclusive, unsigned int endExclusive, double offset);
+    unsigned int selectDataPointsIndex(int sensorId, unsigned int numData, std::vector<DataPoint*>* tempDataPointList, unsigned int startInclusive, unsigned int endExclusive, double offset);
 
     SensorMap* sensors;
     
     unsigned int sensorPriorityLCM;
-    std::unordered_map<sensor_id_t, unsigned int> sensorRelativeSpacing;
+    std::unordered_map<int, unsigned int> sensorRelativeSpacing;
 
     std::vector<DataPoint*>* currentData;
     std::vector<DataPoint*>* previousData;
 
-    std::unordered_map<sensor_id_t, std::vector<DataPoint>*> dataPoints;
-    std::unordered_map<sensor_id_t, unsigned int> nextUnusedDataPointIndex;
+    std::unordered_map<int, std::vector<DataPoint>*> dataPoints;
+    std::unordered_map<int, unsigned int> nextUnusedDataPointIndex;
 
 };
