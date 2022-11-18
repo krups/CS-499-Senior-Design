@@ -80,6 +80,4 @@ const std::string SENSOR_DATA_PATH = "./data/"; // This directory must exist bef
 #define VALIDITY_P
 #endif
 
-void initializeSensors(SensorMap &sensors);
-
 #endif
