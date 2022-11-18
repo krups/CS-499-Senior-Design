@@ -1,4 +1,5 @@
 FLAGS = -Wall -lwiringPi -pthread -std=c++17
+test_f = -g -Wall -pthread -std=c++17
 GOAL = kaps
 
 run: $(GOAL)
@@ -10,9 +11,8 @@ kaps:
 cleanData:
 	rm -rf ./data/*
 
-test: test.cpp data.cpp
-	g++ -o test test.cpp data.cpp copyBits.cpp -Wall -pthread
-	./test
+test: test.cpp data.cpp Sensors.cpp copyBits.cpp
+	g++ -o test $^ $(test_f)
 clean:
 	rm -f $(GOAL) a.out
 
