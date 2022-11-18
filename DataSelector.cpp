@@ -1,5 +1,7 @@
 #include "DataSelector.h"
 
+#include <iostream>
+
 DataSelector::DataSelector() {
   sensorPriorityLCM = 1;
 }
@@ -345,6 +347,8 @@ std::vector<DataPoint*>* DataSelector::selectData() {
   for (unsigned int dataPointListIndex = 0; dataPointListIndex < dataPointListSize; dataPointListIndex++) {
     (*dataPointList)[dataPointListIndex]->used = false;
   }
+
+  std::cout << "generated list size: " << dataPointList->size() << std::endl;
 
   // Return the list
   return dataPointList;

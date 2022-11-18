@@ -94,6 +94,8 @@ void *PackagingThread(void *arguments)
     // Constantly create new packets
     while (true)
     {
+        delay(5000);
+
         // Initialize newPacket to zeros
         memset(newPacket, '\0', PACKET_SIZE);
 
@@ -107,6 +109,12 @@ void *PackagingThread(void *arguments)
             int startingPos = 0;
             for (DataPoint *dataInfo : dataList)
             {
+                delay(500);
+
+                std::cout << "list size: " << dataList.size() << std::endl;
+
+                std::cout << "debug: " << dataInfo->sensor_id << " " << dataInfo->fileIndex << std::endl;
+
                 // Open the sensor file
                 sem_wait(&sensor1Sem);
                 std::string path = SENSOR_DATA_PATH;
@@ -126,7 +134,7 @@ void *PackagingThread(void *arguments)
                     buffer = (uint8_t *)malloc(numBytes);
                     sensorFile.read((char *)buffer, numBytes);
                     if (!sensorFile)
-                        std::cout << "ERROR: only " << sensorFile.gcount() << "bytes could be read";
+                        std::cout << "ERROR: only " << sensorFile.gcount() << "bytes could be read\n";
 
                     // Add to the packet
                     copyBitsB(buffer, 0, newPacket, startingPos, numBits);
