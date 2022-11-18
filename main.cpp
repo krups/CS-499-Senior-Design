@@ -23,7 +23,7 @@ sem_t sensor1Sem;
 
 SensorMap sensors;
 
-void saveData(Data data)
+void saveData(Data data, char *buf)
 {
 #ifdef PRINT_DATA
     data.printData();
@@ -35,7 +35,7 @@ void saveData(Data data)
     sensorDataFile.open(path, std::ios_base::app);
     if (!sensorDataFile.fail())
     {
-        sensorDataFile << data;
+        sensorDataFile << buf;
 #ifdef PRINT_DATA
         printf("Saved %d, %u to file!\n", data.getType(), data.getTimeStamp());
 #endif
@@ -88,7 +88,7 @@ void *PackagingThread(void *arguments)
     DataSelector dataSelector(&sensors);
     std::vector<DataPoint *> dataList;
     std::ifstream sensorFile;
-    uint8_t * buffer;
+    uint8_t *buffer;
     uint8_t newPacket[PACKET_SIZE];
 
     // Constantly create new packets
@@ -101,7 +101,8 @@ void *PackagingThread(void *arguments)
         dataList = *dataSelector.selectData();
 
         // If there was data, create a new packet
-        if (!dataList.empty()) {
+        if (!dataList.empty())
+        {
             // Read each data point from sensor file
             int startingPos = 0;
             for (DataPoint *dataInfo : dataList)
@@ -119,11 +120,11 @@ void *PackagingThread(void *arguments)
 
                     // Find the number of bytes for that type
                     int numBits = sensors.sensorMap[dataInfo->sensor_id]->numBitsPerDataPoint;
-                    int numBytes = ceil(numBits/8.0);
+                    int numBytes = ceil(numBits / 8.0);
 
                     // Read the bytes
-                    buffer = (uint8_t*) malloc (numBytes);
-                    sensorFile.read((char*) buffer, numBytes);
+                    buffer = (uint8_t *)malloc(numBytes);
+                    sensorFile.read((char *)buffer, numBytes);
                     if (!sensorFile)
                         std::cout << "ERROR: only " << sensorFile.gcount() << "bytes could be read";
 
@@ -148,25 +149,25 @@ void *PackagingThread(void *arguments)
         sem_wait(&packetSem);
 
         // If the previous packet was used, mark data as sent
-        if (dataUsed) 
+        if (dataUsed)
         {
             dataSelector.markUsed();
             dataUsed = false;
         }
 
         // If there was new data, write new packet
-        if (!dataList.empty()) {
+        if (!dataList.empty())
+        {
             memcpy(packetBuffer, newPacket, PACKET_SIZE);
         }
-        
 
-#ifdef PACKET_P  // Print the packet for debugging
+#ifdef PACKET_P // Print the packet for debugging
         printf("Generated packet: %s\n", packetBuffer);
 #endif
         // Release packet buffer
         sem_post(&packetSem);
     } // end while(true)
-    
+
     free(newPacket);
     return NULL;
 } // end PackagingThread
@@ -237,17 +238,14 @@ void *IOThread(void *arguments)
                     // Write to the sensor data file
                     Data datum(line, &sensors);
                     int size = datum.getNumBytes();
-                    printf("sensor bytes: %d\n", size);
                     char temp_buf[size];
                     memset(&temp_buf, 0, size);
-                    datum.printData();
                     datum.createBitBuffer(temp_buf);
                     sem_wait(&sensor1Sem);
 
                     // Save data after checking validity
                     if (checkValid(datum))
-                        saveData(datum);
-
+                        saveData(datum, temp_buf);
                     sem_post(&sensor1Sem);
                 }
                 catch (std::string e)
@@ -272,9 +270,13 @@ int main()
 
     // Active Sensors
     // Entries should be formatted: sensor_id, sensor_priority, num_samples_per_data_point, num_bits_per_sample
-    sensors.addSensor(THERMOCOUPLE_ID, THERMOCOUPLE_PRIORITY, THERMOCOUPLE_NUM_SAMPLES_PER_DATA_POINT, THERMOCOUPLE_NUM_BITS_PER_SAMPLE);
-    sensors.addSensor(SPECTROMETER_ID, SPECTROMETER_PRIORITY, SPECTROMETER_NUM_SAMPLES_PER_DATA_POINT, SPECTROMETER_NUM_BITS_PER_SAMPLE);
-    sensors.addSensor(ACCELEROMETER_ID, ACCELEROMETER_PRIORITY, ACCELEROMETER_NUM_SAMPLES_PER_DATA_POINT, ACCELEROMETER_NUM_BITS_PER_SAMPLE);
+    sensors.addSensor(TC_ID, TC_PRIORITY, TC_NUM_SAMPLES_PER_DATA_POINT, TC_NUM_BITS_PER_SAMPLE);
+    sensors.addSensor(IMU_ID, IMU_PRIORITY, IMU_NUM_SAMPLES_PER_DATA_POINT, IMU_NUM_BITS_PER_SAMPLE);
+    sensors.addSensor(GPS_ID, GPS_PRIORITY, GPS_NUM_SAMPLES_PER_DATA_POINT, GPS_NUM_BITS_PER_SAMPLE);
+    sensors.addSensor(RMC_ID, RMC_PRIORITY, RMC_NUM_SAMPLES_PER_DATA_POINT, RMC_NUM_BITS_PER_SAMPLE);
+    sensors.addSensor(ACC_ID, ACC_PRIORITY, ACC_NUM_SAMPLES_PER_DATA_POINT, ACC_NUM_BITS_PER_SAMPLE);
+    sensors.addSensor(PRES_ID, PRES_PRIORITY, PRES_NUM_SAMPLES_PER_DATA_POINT, PRES_NUM_BITS_PER_SAMPLE, PRES_MULT);
+    sensors.addSensor(SPEC_ID, SPEC_PRIORITY, SPEC_NUM_SAMPLES_PER_DATA_POINT, SPEC_NUM_BITS_PER_SAMPLE);
 
     // Start semaphores
     if (sem_init(&packetSem, 0, 1) != 0)
