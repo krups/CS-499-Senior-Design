@@ -8,9 +8,9 @@
 #define PACKET_SIZE_BITS PACKET_SIZE * 8
 
 // Sensor metadata size in bytes
-#define SENSOR_METADATA_BITS 16
 #define SENSOR_ID_BITS 4
-#define SENSOR_TIMESTAMP_BITS SENSOR_METADATA_BITS - SENSOR_ID_BITS
+#define SENSOR_TIMESTAMP_BITS 12
+#define SENSOR_METADATA_BITS (SENSOR_ID_BITS + SENSOR_TIMESTAMP_BITS)
 
 // Serial port which interfaces with Feather M4 Express
 #define SERIAL_FEATHER "/dev/ttyS1"
@@ -23,13 +23,13 @@ const std::string SENSOR_DATA_PATH = "./data/"; // This directory must exist bef
 
 #define THERMOCOUPLE_ID 1
 #define THERMOCOUPLE_PRIORITY 1
-#define THERMOCOUPLE_NUM_SAMPLES_PER_DATA_POINT 2
-#define THERMOCOUPLE_NUM_BITS_PER_SAMPLE 16
+#define THERMOCOUPLE_NUM_SAMPLES_PER_DATA_POINT 4
+#define THERMOCOUPLE_NUM_BITS_PER_SAMPLE 11
 
 #define SPECTROMETER_ID 2
 #define SPECTROMETER_PRIORITY 1
 #define SPECTROMETER_NUM_SAMPLES_PER_DATA_POINT 2
-#define SPECTROMETER_NUM_BITS_PER_SAMPLE 16
+#define SPECTROMETER_NUM_BITS_PER_SAMPLE 1
 
 #define ACCELEROMETER_ID 3
 #define ACCELEROMETER_PRIORITY 1
@@ -37,7 +37,7 @@ const std::string SENSOR_DATA_PATH = "./data/"; // This directory must exist bef
 #define ACCELEROMETER_NUM_BITS_PER_SAMPLE 16
 
 // Validity parameters
-// Check for erroneous data 
+// Check for erroneous data
 #define TC_LOW -1000
 #define TC_MAX 10000
 
@@ -50,7 +50,7 @@ const std::string SENSOR_DATA_PATH = "./data/"; // This directory must exist bef
 
 #define DEBUG // comment/uncomment to enable/disable debugging logs
 #ifdef DEBUG
-// #define PRINT_DATA 
+// #define PRINT_DATA
 #define PACKET_P
 #define VALIDITY_P
 #endif

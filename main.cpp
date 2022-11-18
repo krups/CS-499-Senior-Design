@@ -201,16 +201,28 @@ void *IOThread(void *arguments)
 #ifdef PRINT_DATA
                 printf("%s\n", line);
 #endif
+                try
+                {
+                    // Write to the sensor data file
+                    Data datum(line, &sensors);
+                    int size = datum.getNumBytes();
+                    printf("sensor bytes: %d\n", size);
+                    char temp_buf[size];
+                    memset(&temp_buf, 0, size);
+                    datum.printData();
+                    datum.createBitBuffer(temp_buf);
+                    sem_wait(&sensor1Sem);
 
-                // Write to the sensor data file
-                Data datum(line);
-                sem_wait(&sensor1Sem);
+                    // Save data after checking validity
+                    if (checkValid(datum))
+                        saveData(datum);
 
-                // Save data after checking validity
-                if (checkValid(datum))
-                    saveData(datum);
-
-                sem_post(&sensor1Sem);
+                    sem_post(&sensor1Sem);
+                }
+                catch (std::string e)
+                {
+                    printf("%s\n", e.c_str());
+                }
             } // end else
             // Reset variables
             pos = 0;

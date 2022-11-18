@@ -14,19 +14,31 @@
 #include "DataSelector.h"
 #include "copyBits.h"
 
-char tc_samp[256] = "1,33,4,1,8,16,5";
-char buf[340];
+SensorMap sensors;
+char tc_samp[256] = "2,333,0,1";
+int bufBitPos = 0;
 
 int main()
 {
-    // memset(buf, '\0', sizeof(buf));
-    Data data(tc_samp);
-    std::cout << data;
-    data.getData();
-    copyBitsB((uint8_t *)tc_samp, 18, (uint8_t *)buf, 2, 14);
+    sensors.addSensor(THERMOCOUPLE_ID, THERMOCOUPLE_PRIORITY, THERMOCOUPLE_NUM_SAMPLES_PER_DATA_POINT, THERMOCOUPLE_NUM_BITS_PER_SAMPLE);
+    sensors.addSensor(SPECTROMETER_ID, SPECTROMETER_PRIORITY, SPECTROMETER_NUM_SAMPLES_PER_DATA_POINT, SPECTROMETER_NUM_BITS_PER_SAMPLE);
 
-    std::cout << "buffer: " << buf << "\n";
-    std::cout << "Size of buffer: " << sizeof(buf) << "\n";
+    try
+    {
+        Data data(tc_samp, &sensors);
+        int size = data.getNumBytes();
+        printf("sensor bytes: %d\n", size);
+        char temp_buf[size];
+        memset(&temp_buf, 0, size);
+        data.printData();
+        data.createBitBuffer(temp_buf);
+        std::cout << "buffer: " << temp_buf << "\n";
+    }
+
+    catch (std::string error)
+    {
+        printf("%s\n", error.c_str());
+    }
 
     return 0;
 }
