@@ -127,11 +127,12 @@ void *PackagingThread(void *arguments)
                     sensorFile.read((char *)buffer, numBytes);
                     if (!sensorFile)
                         std::cout << "ERROR: only " << sensorFile.gcount() << "bytes could be read";
-
-                    // Add to the packet
-                    copyBitsB(buffer, 0, newPacket, startingPos, numBits);
-                    startingPos += numBits;
-
+                    else {
+                        // Add to the packet
+                        copyBitsB(buffer, 0, newPacket, startingPos, numBits);
+                        startingPos += numBits;
+                    }
+                    
                     // Clean up
                     sensorFile.close();
                     free(buffer);
