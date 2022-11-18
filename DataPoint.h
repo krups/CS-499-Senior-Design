@@ -5,7 +5,7 @@ struct DataPoint {
   std::streampos fileIndex;
   sensor_id_t sensor_id;
   uint8_t numIncludes;
-  double gradient;
+  unsigned int gradient;
   bool used;
 };
 

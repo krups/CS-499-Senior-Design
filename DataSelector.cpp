@@ -92,8 +92,17 @@ void DataSelector::updateDataPoints() {
   }
 }
 
-unsigned int DataSelector::selectDataPointsGradient(sensor_id_t sensorId, unsigned int numData, std::vector<DataPoint*>* tempDataPointList, unsigned int startInclusive, unsigned int endExclusive, float offset) {
-  double totalGradient = 0;
+unsigned int DataSelector::selectDataPointsGradient(sensor_id_t sensorId, unsigned int numData, std::vector<DataPoint*>* tempDataPointList, unsigned int startInclusive, unsigned int endExclusive, double offset) {
+  // Make sure that it doesn't try to select more data points than exist
+  if ((endExclusive - startInclusive) < numData) {
+    numData = endExclusive - startInclusive;
+  }
+  
+  if (numData == 0) {
+    return 0;
+  }
+
+  int totalGradient = 0;
     
   for (unsigned int dataPointIndex = startInclusive; dataPointIndex < endExclusive; dataPointIndex++) {
     totalGradient += (*dataPoints[sensorId])[dataPointIndex].gradient;
@@ -105,25 +114,21 @@ unsigned int DataSelector::selectDataPointsGradient(sensor_id_t sensorId, unsign
 
   bool allDataUsed = false;
 
-  for (unsigned int index = 1; index <= numData; index++) {
+  for (unsigned int index = 0; index < numData; index++) {
     if (allDataUsed == true) {
       break;
     }
 
     bool pointPicked = false;
 
-    double targetGradient = (gradientSpacing * offset) + (gradientSpacing * index);
+    int targetGradient = (gradientSpacing * offset) + (gradientSpacing * index);
 
     for (unsigned int dataPointIndex = startInclusive; dataPointIndex < endExclusive; dataPointIndex++) {
       if (pointPicked == true || allDataUsed == true) {
         break;
       }
 
-      if (index == numData && dataPointIndex == (endExclusive - 1)) {
-        targetGradient = 0; // Address rounding errors to make sure the last point is always picked
-      } else {
-        targetGradient -= (*dataPoints[sensorId])[dataPointIndex].gradient;
-      }
+      targetGradient -= (*dataPoints[sensorId])[dataPointIndex].gradient;
 
       if (targetGradient <= 0) {
         if ((*dataPoints[sensorId])[dataPointIndex].used == false) {
@@ -172,15 +177,24 @@ unsigned int DataSelector::selectDataPointsGradient(sensor_id_t sensorId, unsign
   return numPointsSelected;
 }
 
-unsigned int DataSelector::selectDataPointsIndex(sensor_id_t sensorId, unsigned int numData, std::vector<DataPoint*>* tempDataPointList, unsigned int start, unsigned int end, float offset) {
+unsigned int DataSelector::selectDataPointsIndex(sensor_id_t sensorId, unsigned int numData, std::vector<DataPoint*>* tempDataPointList, unsigned int startInclusive, unsigned int endExclusive, double offset) {
+  // Make sure that it doesn't try to select more data points than exist
+  if ((endExclusive - startInclusive) < numData) {
+    numData = endExclusive - startInclusive;
+  }
+  
+  if (numData == 0) {
+    return 0;
+  }
+  
   // Calculate the index increment to allow that number of data points to be evenly spaced across time (from the last used data point to the last recorded data point)
-  unsigned int dataSpacing = (end - start) / numData;
-  dataSpacing = std::max((unsigned int) 1, dataSpacing);
+  double dataSpacing = (endExclusive - startInclusive) / numData;
+  dataSpacing = std::max(1.0, dataSpacing);
 
   unsigned int numPointsSelected = 0;
 
   // Iterate through the new data points using the calculated increment and add them to the temporary vector
-  for (unsigned int dataPointIndex = start + dataSpacing * offset; dataPointIndex < end; dataPointIndex += dataSpacing) {
+  for (unsigned int dataPointIndex = startInclusive + (dataSpacing * offset); dataPointIndex < endExclusive; dataPointIndex += dataSpacing) {
     tempDataPointList->push_back(&(*dataPoints[sensorId])[dataPointIndex]);
     numPointsSelected++;
   }
