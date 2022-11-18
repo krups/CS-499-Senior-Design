@@ -2,6 +2,7 @@
 #define CONFIG_H
 
 #include <string>
+#include "Sensors.h"
 
 // Maximum packet size in bytes
 #define PACKET_SIZE 340
@@ -57,5 +58,7 @@ const std::string SENSOR_DATA_PATH = "./data/"; // This directory must exist bef
 #define PACKET_P
 #define VALIDITY_P
 #endif
+
+void initializeSensors(SensorMap &sensors);
 
 #endif
