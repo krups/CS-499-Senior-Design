@@ -197,9 +197,12 @@ unsigned int DataSelector::selectDataPointsIndex(int sensorId, unsigned int numD
   unsigned int numPointsSelected = 0;
 
   // Iterate through the new data points using the calculated increment and add them to the temporary vector
-  for (double dataPointIndex = startInclusive + (dataSpacing * offset); dataPointIndex < endExclusive; dataPointIndex += dataSpacing) {
+  double dataPointIndex = startInclusive + (dataSpacing * offset);
+  for (unsigned int i = 0; i < numData; i++) {
     tempDataPointList->push_back(&(*dataPoints[sensorId])[(int) dataPointIndex]);
     numPointsSelected++;
+
+    dataPointIndex += dataSpacing;
   }
 
   return numPointsSelected;
