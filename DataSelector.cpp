@@ -191,7 +191,7 @@ unsigned int DataSelector::selectDataPointsIndex(int sensorId, unsigned int numD
   }
   
   // Calculate the index increment to allow that number of data points to be evenly spaced across time (from the last used data point to the last recorded data point)
-  double dataSpacing = (endExclusive - startInclusive) / numData;
+  double dataSpacing = ((endExclusive - 1) - startInclusive) / numData;
   dataSpacing = std::max(1.0, dataSpacing);
 
   unsigned int numPointsSelected = 0;
