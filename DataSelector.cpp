@@ -181,8 +181,9 @@ unsigned int DataSelector::selectDataPointsGradient(int sensorId, unsigned int n
 
 unsigned int DataSelector::selectDataPointsIndex(int sensorId, unsigned int numData, std::vector<DataPoint*>* tempDataPointList, unsigned int startInclusive, unsigned int endExclusive, double offset) {
   // Make sure that it doesn't try to select more data points than exist
-  if ((endExclusive - startInclusive) < numData) {
+  if ((endExclusive - startInclusive) <= numData) {
     numData = endExclusive - startInclusive;
+    offset = 0;
   }
   
   if (numData == 0) {
@@ -196,7 +197,7 @@ unsigned int DataSelector::selectDataPointsIndex(int sensorId, unsigned int numD
   unsigned int numPointsSelected = 0;
 
   // Iterate through the new data points using the calculated increment and add them to the temporary vector
-  for (unsigned int dataPointIndex = startInclusive + (dataSpacing * offset); dataPointIndex < endExclusive; dataPointIndex += dataSpacing) {
+  for (unsigned int dataPointIndex = startInclusive + (dataSpacing * offset); dataPointIndex < endExclusive; dataPointIndex += (unsigned int) dataSpacing) {
     tempDataPointList->push_back(&(*dataPoints[sensorId])[dataPointIndex]);
     numPointsSelected++;
   }
