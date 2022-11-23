@@ -13,6 +13,7 @@ SensorSettings::SensorSettings(uint8_t priority, uint8_t numSamplesPerDataPoint,
   this->numSamplesPerDataPoint = numSamplesPerDataPoint;
   this->numBitsPerSample = numBitsPerSample;
   this->numBitsPerDataPoint = SENSOR_METADATA_BITS + (numSamplesPerDataPoint * numBitsPerSample);
+  this->multiplier = -1;
 }
 
 SensorSettings::SensorSettings(uint8_t priority, uint8_t numSamplesPerDataPoint, uint8_t numBitsPerSample, int multiplier) {

@@ -1,5 +1,24 @@
 #include "data.h"
 
+const std::string WHITESPACE = " \n\r\t\f\v";
+
+std::string ltrim(const std::string &s)
+{
+    size_t start = s.find_first_not_of(WHITESPACE);
+    return (start == std::string::npos) ? "" : s.substr(start);
+}
+
+std::string rtrim(const std::string &s)
+{
+    size_t end = s.find_last_not_of(WHITESPACE);
+    return (end == std::string::npos) ? "" : s.substr(0, end + 1);
+}
+
+std::string trim(const std::string &s)
+{
+    return rtrim(ltrim(s));
+}
+
 /**
  * @brief Construct a new Data:: Data object
  *        Based on format of incoming raw data:
@@ -26,10 +45,28 @@ Data::Data(char *line, SensorMap *sensors)
     }
     time_stamp = (u_int32_t)atoi(tokens[1]);
     num_vals = sensors->sensorMap[type]->numSamplesPerDataPoint;
+
     for (int i = 2; i < num_vals + 2; i++)
     {
-        data.push_back((u_int16_t)atoi(tokens[i]));
+        int value = atoi(tokens[i]);
+        printf("INSIDE DATA.CPP\n");
+        printf("tokens[%d]: %s!\n", i, tokens[i]);
+        printf("value: %d!\n", value);
+
+        if (!is_number(std::to_string(value)))
+        {
+            std::string msg = "Error: value at ";
+            msg.append(std::to_string(time_stamp));
+            msg.append(" Error: value on ");
+            msg.append(std::to_string(type));
+            msg.append(" improper format: ");
+            msg.append(tokens[i]);
+            throw msg;
+        }
+        if (sensors->sensorMap[i]->multiplier != -1) value *= sensors->sensorMap[i]->multiplier;
+        data.push_back(value);
     }
+
     bits_per_sample = sensors->sensorMap[type]->numBitsPerSample;
     num_bytes = ceil(((float)sensors->sensorMap[type]->numBitsPerDataPoint + (sensors->sensorMap[type]->numBitsPerDataPoint % 8)) / 8);
 }
@@ -47,6 +84,11 @@ Data::Data(const Data &x)
     bits_per_sample = x.bits_per_sample;
     num_bytes = x.num_bytes;
     data = x.data;
+}
+
+bool Data::is_number(const std::string &s)
+{
+    return (strspn(s.c_str(), "-.0123456789") == s.size());
 }
 
 /**

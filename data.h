@@ -20,7 +20,7 @@ public:
     int getNumBytes();
     u_int32_t getTimeStamp();
     std::vector<u_int16_t> getData();
-    void createBitBuffer(char* buf);
+    void createBitBuffer(char *buf);
     void printData();
     friend std::ostream &operator<<(std::ostream &out, const Data &x);
 
@@ -31,4 +31,5 @@ private:
     int bits_per_sample;
     int num_bytes;
     std::vector<u_int16_t> data;
+    bool is_number(const std::string &s);
 };
