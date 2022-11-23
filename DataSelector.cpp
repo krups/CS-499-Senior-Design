@@ -181,8 +181,9 @@ unsigned int DataSelector::selectDataPointsGradient(int sensorId, unsigned int n
 
 unsigned int DataSelector::selectDataPointsIndex(int sensorId, unsigned int numData, std::vector<DataPoint*>* tempDataPointList, unsigned int startInclusive, unsigned int endExclusive, double offset) {
   // Make sure that it doesn't try to select more data points than exist
-  if ((endExclusive - startInclusive) < numData) {
+  if ((endExclusive - startInclusive) <= numData) {
     numData = endExclusive - startInclusive;
+    offset = 0;
   }
   
   if (numData == 0) {
@@ -190,15 +191,18 @@ unsigned int DataSelector::selectDataPointsIndex(int sensorId, unsigned int numD
   }
   
   // Calculate the index increment to allow that number of data points to be evenly spaced across time (from the last used data point to the last recorded data point)
-  double dataSpacing = (endExclusive - startInclusive) / numData;
+  double dataSpacing = ((endExclusive - 1) - startInclusive) / numData;
   dataSpacing = std::max(1.0, dataSpacing);
 
   unsigned int numPointsSelected = 0;
 
   // Iterate through the new data points using the calculated increment and add them to the temporary vector
-  for (unsigned int dataPointIndex = startInclusive + (dataSpacing * offset); dataPointIndex < endExclusive; dataPointIndex += dataSpacing) {
-    tempDataPointList->push_back(&(*dataPoints[sensorId])[dataPointIndex]);
+  double dataPointIndex = startInclusive + (dataSpacing * offset);
+  for (unsigned int i = 0; i < numData; i++) {
+    tempDataPointList->push_back(&(*dataPoints[sensorId])[(int) dataPointIndex]);
     numPointsSelected++;
+
+    dataPointIndex += dataSpacing;
   }
 
   return numPointsSelected;
@@ -228,9 +232,10 @@ std::vector<DataPoint*>* DataSelector::selectData() {
   }
 
   // Loop while allocating points to each sensor until every possible bit has been used
+  bool moreData = false;
   unsigned int usedSpace = 0;
-  unsigned int iteration = 0;
-  unsigned int maxIterations = -1; // This is an intentional overflow to the largest possible unsigned int value
+  int iteration = 0;
+  int maxIterations = -1;
   while (iteration < maxIterations) {
     for (auto [sensorId, sensorSettings] : sensors->sensorMap) {
       if (iteration >= nextIterationPerSensor[sensorId]) {
@@ -238,13 +243,19 @@ std::vector<DataPoint*>* DataSelector::selectData() {
           usedSpace += sensorSettings->numBitsPerDataPoint;
           pointsPerSensor[sensorId] += 1;
           nextIterationPerSensor[sensorId] += sensorRelativeSpacing[sensorId];
-        } else {
+          moreData = true;
+        } else if (maxIterations == -1) {
           maxIterations = iteration + sensorPriorityLCM;
         }
       }
     }
 
     iteration++;
+
+    if (moreData && usedSpace != PACKET_SIZE_BITS) {
+      moreData = false;
+      maxIterations += sensorPriorityLCM;
+    }
   }
 
   // Create a temporary unordered map of vectors of all data points that are chosen for the next packet
