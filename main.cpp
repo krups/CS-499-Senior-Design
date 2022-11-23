@@ -31,11 +31,10 @@ void saveData(Data data, char *buf)
     std::ofstream sensorDataFile;
     std::string path = SENSOR_DATA_PATH;
     path += std::to_string(data.getType());
-
-    sensorDataFile.open(path, std::ios_base::app);
+    sensorDataFile.open(path, std::ios_base::app | std::ios_base::binary);
     if (!sensorDataFile.fail())
     {
-        sensorDataFile << buf;
+        sensorDataFile.write(buf, sizeof(buf));
 #ifdef PRINT_DATA
         printf("Saved %d, %u to file!\n", data.getType(), data.getTimeStamp());
 #endif
@@ -135,12 +134,13 @@ void *PackagingThread(void *arguments)
                     sensorFile.read((char *)buffer, numBytes);
                     if (!sensorFile)
                         std::cout << "ERROR: only " << sensorFile.gcount() << " bytes could be read\n";
-                    else {
+                    else
+                    {
                         // Add to the packet
                         copyBitsB(buffer, 0, newPacket, startingPos, numBits);
                         startingPos += numBits;
                     }
-                    
+
                     // Clean up
                     sensorFile.close();
                     free(buffer);
@@ -244,12 +244,12 @@ void *IOThread(void *arguments)
                     sem_post(&packetSem);
 
                     // Save sent packet
-                    //std::ofstream packetDataFile;
-                    FILE* packetDataFile;
+                    // std::ofstream packetDataFile;
+                    FILE *packetDataFile;
                     std::string path = PACKET_DATA_PATH;
                     path += std::to_string(packetFileName);
 
-                    //packetDataFile.open(path, std::ios_base::app);
+                    // packetDataFile.open(path, std::ios_base::app);
                     packetDataFile = fopen(path.c_str(), "w");
                     if (packetDataFile != NULL)
                     {
@@ -257,7 +257,7 @@ void *IOThread(void *arguments)
                         // Writes 1 packet of size PACKET_SIZE from packetBuffer to packetDataFile
                         fwrite(packetBuffer, PACKET_SIZE, 1, packetDataFile);
 #ifdef PACKET_P
-			            printf("Saved packet %s to file!\n", packetBuffer);
+                        printf("Saved packet %s to file!\n", packetBuffer);
 #endif
                         sem_post(&packetSem);
                         packetFileName++;
@@ -266,9 +266,9 @@ void *IOThread(void *arguments)
                     else
                     {
 #ifdef DEBUG_P
-			            printf("Open: %s failed!\n", path.c_str());
+                        printf("Open: %s failed!\n", path.c_str());
 #endif
-		            }
+                    }
                 }
                 // Otherwise, save data
                 else
@@ -299,11 +299,11 @@ void *IOThread(void *arguments)
                         printf("%s\n", e.c_str());
                     }
                 } // end else
-            } // end try
-            catch(const std::exception& e)
+            }     // end try
+            catch (const std::exception &e)
             {
 #ifdef DEBUG_P
-                    printf("Invalid code received\n");
+                printf("Invalid code received\n");
 #endif
             }
 
