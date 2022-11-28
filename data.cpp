@@ -22,19 +22,38 @@ std::string trim(const std::string &s)
 /**
  * @brief Construct a new Data:: Data object
  *        Based on format of incoming raw data:
- *        sensor type, time stamp, n number of sensors, value_1, ... , value_n
+ *        sensor type, time stamp, value_1, ... , value_n
  *
  * @param line Line from serial stream of raw data
  */
 Data::Data(char *line, SensorMap *sensors)
 {
+    // Tokenize line
     std::vector<char *> tokens;
     char *ptr = strtok(line, ",");
     while (ptr != NULL)
     {
+        // if new line found replace with null character
+        char *nl = strchr(ptr, '\n');
+        if (nl)
+        {
+            printf("old ptr: %s\n", ptr);
+            *nl = '\0';
+            printf("new ptr: %s\n", ptr);
+        }
+        nl = strchr(ptr, '\r');
+        if (nl)
+        {
+            printf("\\r found\n");
+            *nl = '\0';
+        }
+
+        // add ptr to vector of tokens
         tokens.push_back(ptr);
-        ptr = strtok(NULL, " , ");
+        ptr = strtok(NULL, ",");
     }
+
+    // Extract sensor type and validate sensor parameters
     type = atoi(tokens[0]);
     if (!(sensors->sensorMap.count(type)))
     {
@@ -43,32 +62,46 @@ Data::Data(char *line, SensorMap *sensors)
         msg.append(" not found!");
         throw msg;
     }
+    SensorSettings *params = sensors->sensorMap[type];
+    if (tokens.size() != params->numSamplesPerDataPoint + 2)
+    {
+        std::string msg = "Error: Invalid number of sensor values\n";
+        msg.append("\tExpected: ");
+        msg.append(std::to_string(params->numSamplesPerDataPoint));
+        msg.append(" Detected: ");
+        msg.append(std::to_string(tokens.size() - 2));
+        msg.append("\n");
+        throw msg;
+    }
+
     time_stamp = (u_int32_t)atoi(tokens[1]);
-    num_vals = sensors->sensorMap[type]->numSamplesPerDataPoint;
+    num_vals = params->numSamplesPerDataPoint;
 
     for (int i = 2; i < num_vals + 2; i++)
     {
-        int value = atoi(tokens[i]);
-        printf("INSIDE DATA.CPP\n");
-        printf("tokens[%d]: %s!\n", i, tokens[i]);
-        printf("value: %d!\n", value);
-
-        if (!is_number(std::to_string(value)))
+        // Check if all values are numbers
+        if (!is_number(tokens[i]))
         {
             std::string msg = "Error: value at ";
             msg.append(std::to_string(time_stamp));
-            msg.append(" Error: value on ");
+            msg.append(" on sensor ID ");
             msg.append(std::to_string(type));
             msg.append(" improper format: ");
             msg.append(tokens[i]);
             throw msg;
         }
-        if (sensors->sensorMap[i]->multiplier != -1) value *= sensors->sensorMap[i]->multiplier;
-        data.push_back(value);
+        int value = atoi(tokens[i]);
+        printf("INSIDE DATA.CPP\n");
+        printf("tokens[%d]: %s!\n", i, tokens[i]);
+        printf("value: %d!\n", value);
+        printf("mult: %d!\n", params->multiplier);
+        if (params->multiplier != -1)
+            value *= params->multiplier;
+        data.push_back((int)value);
     }
 
-    bits_per_sample = sensors->sensorMap[type]->numBitsPerSample;
-    num_bytes = ceil(((float)sensors->sensorMap[type]->numBitsPerDataPoint + (sensors->sensorMap[type]->numBitsPerDataPoint % 8)) / 8);
+    bits_per_sample = params->numBitsPerSample;
+    num_bytes = ceil(((float)params->numBitsPerDataPoint + (params->numBitsPerDataPoint % 8)) / 8);
 }
 
 /**
