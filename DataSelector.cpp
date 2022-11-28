@@ -224,8 +224,8 @@ std::vector<DataPoint*>* DataSelector::selectData() {
   // Loop while allocating points to each sensor until every possible bit has been used
   bool moreData = false;
   unsigned int usedSpace = 0;
-  int iteration = 0;
-  int maxIterations = -1;
+  unsigned int iteration = 0;
+  unsigned int maxIterations = -1; // Intentional overflow to max unsigned int value
   while (iteration < maxIterations) {
     for (auto [sensorId, sensorSettings] : sensors->sensorMap) {
       if (iteration >= nextIterationPerSensor[sensorId]) {
@@ -234,7 +234,7 @@ std::vector<DataPoint*>* DataSelector::selectData() {
           pointsPerSensor[sensorId] += 1;
           nextIterationPerSensor[sensorId] += sensorRelativeSpacing[sensorId];
           moreData = true;
-        } else if (maxIterations == -1) {
+        } else if (maxIterations == (unsigned int) -1) {
           maxIterations = iteration + sensorPriorityLCM;
         }
       }
