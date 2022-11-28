@@ -239,11 +239,16 @@ std::vector<DataPoint*>* DataSelector::selectData() {
     for (auto [sensorId, sensorSettings] : sensors->sensorMap) {
       if (iteration >= nextIterationPerSensor[sensorId]) {
         if ((usedSpace + sensorSettings->numBitsPerDataPoint) <= (PACKET_SIZE_BITS)) {
-          usedSpace += sensorSettings->numBitsPerDataPoint;
-          pointsPerSensor[sensorId] += 1;
-          nextIterationPerSensor[sensorId] += sensorRelativeSpacing[sensorId];
-          printf("added point for sensor %d on iteration\n", sensorId, iteration);
-          moreData = true;
+          if (dataPoints[sensorId]->size() > pointsPerSensor[sensorId]) {
+            usedSpace += sensorSettings->numBitsPerDataPoint;
+            pointsPerSensor[sensorId] += 1;
+            nextIterationPerSensor[sensorId] += sensorRelativeSpacing[sensorId];
+            printf("added point for sensor %d on iteration %d\n", sensorId, iteration);
+            moreData = true;
+          } else {
+            nextIterationPerSensor[sensorId] += sensorRelativeSpacing[sensorId];
+            printf("skipped sensor %d on iteration %d, no more data\n", sensorId, iteration);
+          }
         } else if (maxIterations == (unsigned int) -1) {
           maxIterations = iteration + sensorPriorityLCM;
           printf("setting end iteration %d\n", maxIterations);
