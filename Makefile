@@ -14,8 +14,8 @@ cleanData:
 test: test.cpp data.cpp Sensors.cpp copyBits.cpp
 	g++ -o test $^ $(test_f)
 
-decode: decode.cpp
-	g++ -o $(GOAL) $^ $(FLAGS)
+decode: decode.cpp Sensors.cpp copyBits.cpp
+	g++ -o decode $^ $(test_f)
 
 clean:
 	rm -f $(GOAL) a.out
