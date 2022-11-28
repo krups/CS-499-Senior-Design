@@ -47,7 +47,7 @@ void DataSelector::updateDataPoints() {
     path += std::to_string(sensorId);
 
     unsigned int bufferSize = (sensorSettings->numBitsPerDataPoint + 7) / 8; // This rounds up to next byte threshold
-    char* buffer = new char[bufferSize];
+    char* buffer = new char[bufferSize + 1];
 
     // This is where I would put the semaphore wait if we were using per-sensor file semaphores
 
@@ -61,12 +61,12 @@ void DataSelector::updateDataPoints() {
         // Open the file to the last known data point
         sensorFile.seekg((*dataPoints[sensorId])[dataPoints[sensorId]->size() - 1].fileIndex, std::ios_base::beg);
         // And discard the last data point so the read pointer is at the start of the next data point
-        memset(buffer, '\0', bufferSize);
+        memset(buffer, '\0', bufferSize + 1);
         sensorFile.read(buffer, bufferSize);
       }
       
       // Until the end of the file is reached
-      while (sensorFile) {
+      while (sensorFile.peek() != std::char_traits<char>::eof()) {
         // Create a new DataPoint class and initialize its values
         DataPoint newDataPoint;
         newDataPoint.sensor_id = sensorId;
@@ -75,7 +75,7 @@ void DataSelector::updateDataPoints() {
         newDataPoint.used = false;
 
         // Read the data so the read pointer advances
-        memset(buffer, '\0', bufferSize);
+        memset(buffer, '\0', bufferSize + 1);
         sensorFile.read(buffer, bufferSize);
 
         newDataPoint.gradient = 1;
