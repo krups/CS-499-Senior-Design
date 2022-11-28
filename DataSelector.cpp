@@ -235,10 +235,10 @@ std::vector<DataPoint*>* DataSelector::selectData() {
   unsigned int usedSpace = 0;
   unsigned int iteration = 0;
   unsigned int maxIterations = (unsigned int) -1; // Intentional overflow to max unsigned int value
-  while (iteration < maxIterations) {
+  while (iteration <= maxIterations) {
     for (auto [sensorId, sensorSettings] : sensors->sensorMap) {
       if (iteration >= nextIterationPerSensor[sensorId]) {
-        if ((usedSpace + sensorSettings->numBitsPerDataPoint) < (PACKET_SIZE_BITS)) {
+        if ((usedSpace + sensorSettings->numBitsPerDataPoint) <= (PACKET_SIZE_BITS)) {
           usedSpace += sensorSettings->numBitsPerDataPoint;
           pointsPerSensor[sensorId] += 1;
           nextIterationPerSensor[sensorId] += sensorRelativeSpacing[sensorId];
@@ -253,7 +253,7 @@ std::vector<DataPoint*>* DataSelector::selectData() {
 
     iteration++;
 
-    if (moreData && (usedSpace != PACKET_SIZE_BITS)) {
+    if (iteration == maxIterations && moreData) {
       moreData = false;
       maxIterations += sensorPriorityLCM;
       printf("more data, new end %d\n", maxIterations);
