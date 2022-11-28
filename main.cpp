@@ -18,6 +18,8 @@
 
 char packetBuffer[PACKET_SIZE];
 bool dataUsed = false;
+
+sem_t dataUsedSem;
 sem_t packetSem;
 sem_t sensor1Sem;
 
@@ -31,7 +33,7 @@ void saveData(Data data, char *buf)
     std::ofstream sensorDataFile;
     std::string path = SENSOR_DATA_PATH;
     path += std::to_string(data.getType());
-    sensorDataFile.open(path, std::ios_base::app | std::ios_base::binary);
+    sensorDataFile.open(path, std::ios::app | std::ios::binary);
     if (!sensorDataFile.fail())
     {
         sensorDataFile.write(buf, sizeof(buf));
@@ -62,7 +64,7 @@ bool checkValid(Data data)
         }
 
         // TC Validity Check
-        if (data.getType() == TC_SERIAL && (points[i] < TC_LOW || points[i] > TC_MAX))
+        if (data.getType() == TC_ID && (points[i] < TC_LOW || points[i] > TC_MAX))
         {
 #ifdef VALIDITY_P
             printf("Error %u: TC validity check failed with '%d = %u'!\n", data.getTimeStamp(), i, points[i]);
@@ -71,7 +73,7 @@ bool checkValid(Data data)
         }
 
         // ACC Validity Check
-        if (data.getType() == ACC_SERIAL && (points[i] < ACC_LOW || points[i] > ACC_HIGH))
+        if (data.getType() == ACC_ID && (points[i] < ACC_LOW || points[i] > ACC_HIGH))
         {
 #ifdef VALIDITY_P
             printf("Error %u: ACC validity check failed with '%d = %u'!\n", data.getTimeStamp(), i, points[i]);
@@ -158,12 +160,13 @@ void *PackagingThread(void *arguments)
         sem_wait(&packetSem);
 
         // If the previous packet was used, mark data as sent
+        sem_wait(&dataUsedSem);
         if (dataUsed)
         {
             dataSelector.markUsed();
             dataUsed = false;
         }
-
+        sem_post(&dataUsedSem);
         // If there was new data, write new packet
         if (!dataList.empty())
         {
@@ -221,8 +224,11 @@ void *IOThread(void *arguments)
             // Get command/sensor id
             while (line[x] != ',' && line[x] != '\n')
             {
-                code += line[x];
-                x++;
+                if (line[x] != '\n' || line[x] != '\r')
+                {
+                    code += line[x];
+                    x++;
+                }
             }
 #ifdef DEBUG_P
             printf("CODE: %s\n", code.c_str());
@@ -242,6 +248,9 @@ void *IOThread(void *arguments)
 #endif
                     serialPuts(fd, packetBuffer);
                     sem_post(&packetSem);
+                    sem_wait(&dataUsedSem);
+                    dataUsed = true;
+                    sem_post(&dataUsedSem);
 
                     // Save sent packet
                     // std::ofstream packetDataFile;
@@ -331,6 +340,10 @@ int main()
     sensors.addSensor(SPEC_ID, SPEC_PRIORITY, SPEC_NUM_SAMPLES_PER_DATA_POINT, SPEC_NUM_BITS_PER_SAMPLE);
 
     // Start semaphores
+    if (sem_init(&dataUsedSem, 0, 1) != 0)
+    {
+        printf("ERROR: Semaphore failed\n");
+    }
     if (sem_init(&packetSem, 0, 1) != 0)
     {
         printf("ERROR: Semaphore failed\n");
