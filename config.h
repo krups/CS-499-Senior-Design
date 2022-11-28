@@ -54,7 +54,7 @@ const std::string PACKET_DATA_PATH = "./data/packets/"; // This directory must e
 #define PRES_NUM_BITS_PER_SAMPLE 11
 #define PRES_MULT 10
 
-#define SPEC_ID 7
+#define SPEC_ID 10
 #define SPEC_PRIORITY 1
 #define SPEC_NUM_SAMPLES_PER_DATA_POINT 5
 #define SPEC_NUM_BITS_PER_SAMPLE 8
@@ -64,15 +64,15 @@ const std::string PACKET_DATA_PATH = "./data/packets/"; // This directory must e
 #define TC_LOW -1000
 #define TC_MAX 10000
 
-#define ACC_LOW -100
-#define ACC_HIGH 100
+#define ACC_LOW 0
+#define ACC_HIGH 15
 
 // Data Selection Config
 #define NEW_DATA_RATIO 0.8
 #define POINT_INCLUDE_LIMIT 1
 
-#define NEW_DATA_GRADIENT_SELECT true
-#define OLD_DATA_GRADIENT_SELECT true
+#define NEW_DATA_GRADIENT_SELECT false
+#define OLD_DATA_GRADIENT_SELECT false
 
 #define DEBUG // comment/uncomment to enable/disable debugging logs
 #ifdef DEBUG
