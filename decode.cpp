@@ -2,6 +2,8 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <cstring>
+
 #include "config.h"
 #include "Sensors.h"
 #include "copyBits.h"
