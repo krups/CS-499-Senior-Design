@@ -228,32 +228,39 @@ std::vector<DataPoint*>* DataSelector::selectData() {
     nextIterationPerSensor[sensorId] = 0;
   }
 
+  printf("LCM: %d\n", sensorPriorityLCM);
+
   // Loop while allocating points to each sensor until every possible bit has been used
   bool moreData = false;
   unsigned int usedSpace = 0;
   unsigned int iteration = 0;
-  unsigned int maxIterations = -1; // Intentional overflow to max unsigned int value
+  unsigned int maxIterations = (unsigned int) -1; // Intentional overflow to max unsigned int value
   while (iteration < maxIterations) {
     for (auto [sensorId, sensorSettings] : sensors->sensorMap) {
       if (iteration >= nextIterationPerSensor[sensorId]) {
-        if ((usedSpace + sensorSettings->numBitsPerDataPoint) < PACKET_SIZE_BITS) {
+        if ((usedSpace + sensorSettings->numBitsPerDataPoint) < (PACKET_SIZE_BITS)) {
           usedSpace += sensorSettings->numBitsPerDataPoint;
           pointsPerSensor[sensorId] += 1;
           nextIterationPerSensor[sensorId] += sensorRelativeSpacing[sensorId];
+          printf("added sensor %d\n", sensorId);
           moreData = true;
         } else if (maxIterations == (unsigned int) -1) {
           maxIterations = iteration + sensorPriorityLCM;
+          printf("setting end iteration %d\n", maxIterations);
         }
       }
     }
 
     iteration++;
 
-    if (moreData && usedSpace != PACKET_SIZE_BITS) {
+    if (moreData && (usedSpace != PACKET_SIZE_BITS)) {
       moreData = false;
       maxIterations += sensorPriorityLCM;
+      printf("more data, new end %d\n", maxIterations);
     }
   }
+
+  printf("ended iteration %d\n", iteration);
 
   // Create a temporary unordered map of vectors of all data points that are chosen for the next packet
   std::unordered_map<int, std::vector<DataPoint*>*> tempDataPointList;
