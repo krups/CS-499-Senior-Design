@@ -33,18 +33,15 @@ Data::Data(char *line, SensorMap *sensors)
     char *ptr = strtok(line, ",");
     while (ptr != NULL)
     {
-        // if new line found replace with null character
+        // if \n or \r are found replace with null character
         char *nl = strchr(ptr, '\n');
         if (nl)
         {
-            printf("old ptr: %s\n", ptr);
             *nl = '\0';
-            printf("new ptr: %s\n", ptr);
         }
         nl = strchr(ptr, '\r');
         if (nl)
         {
-            printf("\\r found\n");
             *nl = '\0';
         }
 
@@ -91,10 +88,7 @@ Data::Data(char *line, SensorMap *sensors)
             throw msg;
         }
         int value = atoi(tokens[i]);
-        printf("INSIDE DATA.CPP\n");
-        printf("tokens[%d]: %s!\n", i, tokens[i]);
-        printf("value: %d!\n", value);
-        printf("mult: %d!\n", params->multiplier);
+
         if (params->multiplier != -1)
             value *= params->multiplier;
         data.push_back((int)value);
@@ -175,19 +169,19 @@ void Data::createBitBuffer(char *buf)
     int id = type;
     int ts = time_stamp;
     std::vector<u_int16_t> points = data;
-    printf("%d\n", bufBitPos);
+    // printf("%d\n", bufBitPos);
     copyBitsL2B((uint8_t *)&id, (sizeof(int) * 8) - SENSOR_ID_BITS, sizeof(int), (uint8_t *)buf, bufBitPos, SENSOR_ID_BITS);
     bufBitPos += SENSOR_ID_BITS;
-    printf("%d\n", bufBitPos);
+    // printf("%d\n", bufBitPos);
     copyBitsL2B((uint8_t *)&ts, (sizeof(int) * 8) - SENSOR_TIMESTAMP_BITS, sizeof(int), (uint8_t *)buf, bufBitPos, SENSOR_TIMESTAMP_BITS);
     bufBitPos += SENSOR_TIMESTAMP_BITS;
-    printf("%d\n", bufBitPos);
+    // printf("%d\n", bufBitPos);
     for (int i = 0; i < num_vals; i++)
     {
         int point = points[i];
         copyBitsL2B((uint8_t *)&point, (sizeof(int) * 8) - bits_per_sample, sizeof(int), (uint8_t *)buf, bufBitPos, bits_per_sample);
         bufBitPos += bits_per_sample;
-        printf("%d\n", bufBitPos);
+        // printf("%d\n", bufBitPos);
     }
 }
 
@@ -197,7 +191,7 @@ void Data::createBitBuffer(char *buf)
  */
 void Data::printData()
 {
-    std::cout << "Printing data for " << type << ": " << time_stamp << std::endl;
+    std::cout << "Printing data for sensor:" << type << "at t = " << time_stamp << std::endl;
     for (int i = 0; i < num_vals; i++)
     {
         std::cout << "val_" << i << ": " << data[i] << std::endl;
@@ -211,6 +205,6 @@ std::ostream &operator<<(std::ostream &out, const Data &x)
     {
         out << "," << y;
     }
-    out << "\n";
+    // out << "\n";
     return out;
 }

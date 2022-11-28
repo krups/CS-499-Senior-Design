@@ -11,6 +11,9 @@ kaps: main.cpp data.cpp DataSelector.cpp Sensors.cpp copyBits.cpp
 cleanData:
 	rm -rf ./data/*
 
+cleanPackets:
+	rm -rf ./packets/*
+
 test: test.cpp data.cpp Sensors.cpp copyBits.cpp
 	g++ -o test $^ $(test_f)
 
@@ -20,4 +23,4 @@ decode: decode.cpp Sensors.cpp copyBits.cpp
 clean:
 	rm -f $(GOAL) a.out
 
-cleanAll: cleanData clean
+cleanAll: cleanData cleanPackets clean

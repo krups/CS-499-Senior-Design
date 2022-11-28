@@ -89,13 +89,14 @@ void setup()
 
 void loop()
 {
-    led.setPixelColor(0, led.Color(0, 0, 0));
+    led.setPixelColor(0, led.Color(150, 0, 0));
     led.show();
-    if (!(i % 100))
-        Serial1.println(0x8);
-    else
+    buttonWait(5);
+    led.setPixelColor(0, led.Color(0, 0, 150));
+    led.show();
+    for (int p = 0; p < 200; p++)
     {
-        int option = random() % 3;
+        int option = 1;
         switch (option)
         {
         case 0:
@@ -110,11 +111,12 @@ void loop()
         default:
             break;
         }
+        i++;
+        delay(random() % 100);
     }
-    i++;
-    buttonWait(5);
     led.setPixelColor(0, led.Color(0, 150, 0));
     led.show();
-
+    buttonWait(5);
+    Serial1.println(0x8);
     delay(300);
 }

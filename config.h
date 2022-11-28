@@ -21,7 +21,7 @@
 
 // Sensor ID Config
 const std::string SENSOR_DATA_PATH = "./data/"; // This directory must exist before running the program
-const std::string PACKET_DATA_PATH = "./data/packets/"; // This directory must exist before running the program
+const std::string PACKET_DATA_PATH = "./packets/"; // This directory must exist before running the program
 
 #define TC_ID 1
 #define TC_PRIORITY 1
@@ -57,7 +57,7 @@ const std::string PACKET_DATA_PATH = "./data/packets/"; // This directory must e
 #define SPEC_ID 10
 #define SPEC_PRIORITY 1
 #define SPEC_NUM_SAMPLES_PER_DATA_POINT 5
-#define SPEC_NUM_BITS_PER_SAMPLE 8
+#define SPEC_NUM_BITS_PER_SAMPLE 4
 
 // Validity parameters
 // Check for erroneous data
@@ -80,6 +80,7 @@ const std::string PACKET_DATA_PATH = "./data/packets/"; // This directory must e
 #define PACKET_P
 #define VALIDITY_P
 // #define DEBUG_P
+// #define DATA_SEL_P // debug statements in DataSelector.cpp
 #endif
 
 #endif

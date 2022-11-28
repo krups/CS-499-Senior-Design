@@ -10,17 +10,18 @@
 
 SensorMap sensors;
 
-int main() {
+int main()
+{
   sensors.addSensor(TC_ID, TC_PRIORITY, TC_NUM_SAMPLES_PER_DATA_POINT, TC_NUM_BITS_PER_SAMPLE);
   sensors.addSensor(IMU_ID, IMU_PRIORITY, IMU_NUM_SAMPLES_PER_DATA_POINT, IMU_NUM_BITS_PER_SAMPLE);
-  sensors.addSensor(GPS_ID, GPS_PRIORITY, GPS_NUM_SAMPLES_PER_DATA_POINT, GPS_NUM_BITS_PER_SAMPLE);
-  sensors.addSensor(RMC_ID, RMC_PRIORITY, RMC_NUM_SAMPLES_PER_DATA_POINT, RMC_NUM_BITS_PER_SAMPLE);
+  // sensors.addSensor(GPS_ID, GPS_PRIORITY, GPS_NUM_SAMPLES_PER_DATA_POINT, GPS_NUM_BITS_PER_SAMPLE);
+  // sensors.addSensor(RMC_ID, RMC_PRIORITY, RMC_NUM_SAMPLES_PER_DATA_POINT, RMC_NUM_BITS_PER_SAMPLE);
   sensors.addSensor(ACC_ID, ACC_PRIORITY, ACC_NUM_SAMPLES_PER_DATA_POINT, ACC_NUM_BITS_PER_SAMPLE);
-  sensors.addSensor(PRES_ID, PRES_PRIORITY, PRES_NUM_SAMPLES_PER_DATA_POINT, PRES_NUM_BITS_PER_SAMPLE, PRES_MULT);
-  sensors.addSensor(SPEC_ID, SPEC_PRIORITY, SPEC_NUM_SAMPLES_PER_DATA_POINT, SPEC_NUM_BITS_PER_SAMPLE);
+  // sensors.addSensor(PRES_ID, PRES_PRIORITY, PRES_NUM_SAMPLES_PER_DATA_POINT, PRES_NUM_BITS_PER_SAMPLE, PRES_MULT);
+  // sensors.addSensor(SPEC_ID, SPEC_PRIORITY, SPEC_NUM_SAMPLES_PER_DATA_POINT, SPEC_NUM_BITS_PER_SAMPLE);
 
   std::ifstream packetFile;
-  std::string path = SENSOR_DATA_PATH;
+  std::string path = PACKET_DATA_PATH;
 
   std::string filename;
 
@@ -33,9 +34,12 @@ int main() {
   memset(data, '\0', PACKET_SIZE);
 
   packetFile.open(path, std::ios_base::in);
-  if (!packetFile.fail()) {
+  if (!packetFile.fail())
+  {
     packetFile.read(data, PACKET_SIZE);
-  } else {
+  }
+  else
+  {
     std::cout << "Error opening packet file." << std::endl;
     return 1;
   }
@@ -44,40 +48,43 @@ int main() {
 
   unsigned int bitIndex = 0;
 
-  while (moreData) {
+  while (moreData)
+  {
     unsigned int sensorId = 0;
 
-    copyBitsB2L((uint8_t*) data, bitIndex, (uint8_t*) &sensorId, (sizeof(unsigned int) * 8) - SENSOR_ID_BITS, sizeof(unsigned int), SENSOR_ID_BITS);
+    copyBitsB2L((uint8_t *)data, bitIndex, (uint8_t *)&sensorId, (sizeof(unsigned int) * 8) - SENSOR_ID_BITS, sizeof(unsigned int), SENSOR_ID_BITS);
     bitIndex += SENSOR_ID_BITS;
-
-    if (sensorId != 0) {
-      if (sensors.sensorMap[sensorId] != nullptr) {
+    if (sensorId != 0)
+    {
+      if (sensors.sensorMap[sensorId] != nullptr)
+      {
         std::cout << sensorId << ", ";
 
         unsigned int timestamp = 0;
-        copyBitsB2L((uint8_t*) data, bitIndex, (uint8_t*) &sensorId, (sizeof(unsigned int) * 8) - SENSOR_TIMESTAMP_BITS, sizeof(unsigned int), SENSOR_TIMESTAMP_BITS);
+        copyBitsB2L((uint8_t *)data, bitIndex, (uint8_t *)&timestamp, (sizeof(unsigned int) * 8) - SENSOR_TIMESTAMP_BITS, sizeof(unsigned int), SENSOR_TIMESTAMP_BITS);
         bitIndex += SENSOR_TIMESTAMP_BITS;
+        std::cout << timestamp;
 
-        std::cout << timestamp << ", ";
-        
-        for (int i = 0; i < sensors.sensorMap[sensorId]->numSamplesPerDataPoint; i++) {
+        for (int i = 0; i < sensors.sensorMap[sensorId]->numSamplesPerDataPoint; i++)
+        {
           unsigned int value = 0;
-
-          copyBitsB2L((uint8_t*) data, bitIndex, (uint8_t*) &value, (sizeof(unsigned int) * 8) - sensors.sensorMap[sensorId]->numBitsPerSample, sizeof(unsigned int), sensors.sensorMap[sensorId]->numBitsPerSample);
+          std::cout << ", ";
+          copyBitsB2L((uint8_t *)data, bitIndex, (uint8_t *)&value, (sizeof(unsigned int) * 8) - sensors.sensorMap[sensorId]->numBitsPerSample, sizeof(unsigned int), sensors.sensorMap[sensorId]->numBitsPerSample);
           bitIndex += sensors.sensorMap[sensorId]->numBitsPerSample;
-
-          std::cout << value << ", ";
+          std:: cout << value;
         }
 
         std::cout << std::endl;
-      } else {
+      }
+      else
+      {
         std::cout << "Unknown sensor type" << std::endl;
-
         moreData = false;
       }
-    } else {
+    }
+    else
+    {
       std::cout << "End of packet" << std::endl;
-
       moreData = false;
     }
   }

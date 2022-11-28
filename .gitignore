@@ -1,6 +1,5 @@
 .vscode
 decode
-data/1
-data/2
-data/5
+data/*
+packets/*
 testing/CS-499-Senior-Design.ino
