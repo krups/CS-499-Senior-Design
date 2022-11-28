@@ -96,6 +96,8 @@ void DataSelector::updateDataPoints() {
 
 unsigned int DataSelector::selectDataPointsGradient(int sensorId, unsigned int numData, std::vector<DataPoint*>* tempDataPointList, unsigned int startInclusive, unsigned int endExclusive, double offset) {
   // Make sure that it doesn't try to select more data points than exist
+  printf("endExclusive - startInclusive: %u\n", (endExclusive - startInclusive));
+  printf("numData: %u\n", numData);
   if ((endExclusive - startInclusive) < numData) {
     numData = endExclusive - startInclusive;
   }
@@ -180,6 +182,11 @@ unsigned int DataSelector::selectDataPointsGradient(int sensorId, unsigned int n
 }
 
 unsigned int DataSelector::selectDataPointsIndex(int sensorId, unsigned int numData, std::vector<DataPoint*>* tempDataPointList, unsigned int startInclusive, unsigned int endExclusive, double offset) {
+  printf("endExclusive - startInclusive: %u\n", (endExclusive - startInclusive));
+  printf("numData: %u\n", numData);
+  printf("offset: %lf\n", offset);
+  printf("sensorId: %d\n", sensorId);
+
   // Make sure that it doesn't try to select more data points than exist
   if ((endExclusive - startInclusive) <= numData) {
     numData = endExclusive - startInclusive;
@@ -265,6 +272,7 @@ std::vector<DataPoint*>* DataSelector::selectData() {
   for (auto [sensorId, sensorSettings] : sensors->sensorMap) {
     tempDataPointList[sensorId] = new std::vector<DataPoint*>;
   }
+  printf("-------------------------------------------------\n");
 
   // For every sensor
   for (auto [sensorId, sensorSettings] : sensors->sensorMap) {
@@ -280,7 +288,8 @@ std::vector<DataPoint*>* DataSelector::selectData() {
 
     // Track the number of data points selected
     unsigned int numSelected = 0;
-
+    printf("--------------------------------\n");
+    printf("points: %d\n",pointsPerSensor[sensorId]);
     // Pick new data points
     if (NEW_DATA_GRADIENT_SELECT) {
       numSelected = selectDataPointsGradient(sensorId, numNewData, tempDataPointList[sensorId], nextUnusedDataPointIndex[sensorId], sensorDataSize, 1.0);
@@ -300,7 +309,11 @@ std::vector<DataPoint*>* DataSelector::selectData() {
     } else {
       numSelected = selectDataPointsIndex(sensorId, numOldData, tempDataPointList[sensorId], 0, nextUnusedDataPointIndex[sensorId], 0.5);
     }
+    printf("--------------------------------\n");
+
   }
+    printf("-------------------------------------------------\n");
+
 
   // Compile the temporary vectors into a single vector
 
@@ -315,7 +328,7 @@ std::vector<DataPoint*>* DataSelector::selectData() {
   std::vector<DataPoint*>* dataPointList = new std::vector<DataPoint*>;
 
   // Until all data in the temporary vectors of sensor data have been added to the returned vector
-  bool moreData = true;
+  moreData = true;
   while (moreData) {
     moreData = false;
 
