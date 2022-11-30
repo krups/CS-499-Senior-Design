@@ -127,7 +127,7 @@ void *PackagingThread(void *arguments)
                 if (sensorFile.is_open())
                 {
                     // Go to the line
-                    std::cout << "index: " << dataInfo->fileIndex << std::endl;
+                    std::cout << dataInfo->sensor_id << "index: " << dataInfo->fileIndex << std::endl;
                     sensorFile.seekg(dataInfo->fileIndex);
 
                     // Find the number of bytes for that type
