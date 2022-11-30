@@ -59,9 +59,11 @@ void DataSelector::updateDataPoints()
     unsigned int bufferSize = (sensorSettings->numBitsPerDataPoint + 7) / 8; // This rounds up to next byte threshold
     char *buffer = new char[bufferSize + 1];
 
+#ifdef DATA_SEL_P
     std::cout << "sensor: " << sensorId << std::endl;
     std::cout << "numBitsPerDataPoint: " << sensorSettings->numBitsPerDataPoint << std::endl;
     std::cout << "bufferSize: " << bufferSize << std::endl;
+#endif
 
     // This is where I would put the semaphore wait if we were using per-sensor file semaphores
 
@@ -74,7 +76,9 @@ void DataSelector::updateDataPoints()
       // If there were previously tracked data points
       if (dataPoints[sensorId]->size() != 0)
       {
+#ifdef DATA_SEL_P
         std::cout << "CATCHING UP " << sensorId << std::endl;
+#endif
         // Open the file to the last known data point
         sensorFile.seekg((*dataPoints[sensorId])[dataPoints[sensorId]->size() - 1].fileIndex, std::ios_base::beg);
         // And discard the last data point so the read pointer is at the start of the next data point
@@ -85,7 +89,9 @@ void DataSelector::updateDataPoints()
       // Until the end of the file is reached
       while (sensorFile)
       {
+#ifdef DATA_SEL_P
         std::cout << "MORE DATA " << sensorId << std::endl;
+#endif
         // Create a new DataPoint class and initialize its values
         DataPoint newDataPoint;
         newDataPoint.sensor_id = sensorId;
@@ -93,7 +99,9 @@ void DataSelector::updateDataPoints()
         newDataPoint.fileIndex = sensorFile.tellg();
         newDataPoint.used = false;
 
+#ifdef DATA_SEL_P
         std::cout << "FILE INDEX: " << newDataPoint.fileIndex << std::endl;
+#endif
 
         // Read the data so the read pointer advances
         memset(buffer, '\0', bufferSize + 1);
@@ -121,6 +129,8 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
 #ifdef DATA_SEL_P
   printf("endExclusive - startInclusive: %u\n", (endExclusive - startInclusive));
   printf("numData: %u\n", numData);
+  printf("offset: %lf\n", offset);
+  printf("sensorId: %d\n", sensorId);
 #endif
   if ((endExclusive - startInclusive) < numData)
   {
@@ -294,15 +304,16 @@ std::vector<DataPoint *> *DataSelector::selectData()
     {
       if (iteration >= nextIterationPerSensor[sensorId])
       {
+#ifdef DATA_SEL_P
           printf("1 num points for sensor %d: %d\n", sensorId, dataPoints[sensorId]->size());
           printf("2 num picked for this sensor: %d\n", pointsPerSensor[sensorId]);
           printf("3 usedSpace: %d\n", usedSpace);
           printf("4 total space: %d\n", PACKET_SIZE_BITS);
           printf("----\n");
+#endif
         if ((usedSpace + sensorSettings->numBitsPerDataPoint) <= (PACKET_SIZE_BITS))
         {
           if (dataPoints[sensorId]->size() > pointsPerSensor[sensorId]) {
-            printf("added point for sensor %d on iteration %d\n", sensorId, iteration);
             usedSpace += sensorSettings->numBitsPerDataPoint;
             pointsPerSensor[sensorId] += 1;
             nextIterationPerSensor[sensorId] += sensorRelativeSpacing[sensorId];
