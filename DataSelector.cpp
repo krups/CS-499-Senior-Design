@@ -107,7 +107,7 @@ void DataSelector::updateDataPoints()
   }
 }
 
-unsigned int DataSelector::selectDataPointsGradient(int sensorId, unsigned int numData, std::vector<DataPoint *> *tempDataPointList, unsigned int startInclusive, unsigned int endExclusive, double offset)
+unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsigned int numData, std::vector<DataPoint *> *tempDataPointList, unsigned int startInclusive, unsigned int endExclusive, double offset)
 {
 // Make sure that it doesn't try to select more data points than exist
 #ifdef DATA_SEL_P
@@ -203,7 +203,7 @@ unsigned int DataSelector::selectDataPointsGradient(int sensorId, unsigned int n
   return numPointsSelected;
 }
 
-unsigned int DataSelector::selectDataPointsIndex(int sensorId, unsigned int numData, std::vector<DataPoint *> *tempDataPointList, unsigned int startInclusive, unsigned int endExclusive, double offset)
+unsigned int DataSelector::selectDataPointsIndex(unsigned int sensorId, unsigned int numData, std::vector<DataPoint *> *tempDataPointList, unsigned int startInclusive, unsigned int endExclusive, double offset)
 {
 #ifdef DATA_SEL_P
   printf("endExclusive - startInclusive: %u\n", (endExclusive - startInclusive));
@@ -288,6 +288,9 @@ std::vector<DataPoint *> *DataSelector::selectData()
       {
         if ((usedSpace + sensorSettings->numBitsPerDataPoint) <= (PACKET_SIZE_BITS))
         {
+          printf("1 numPoints for this sensor: %d\n", dataPoints[sensorId]->size());
+          printf("2 num picked for this sensor: %d\n", pointsPerSensor[sensorId]);
+          printf("---- added point for sensor %d on iteration %d\n", sensorId, iteration);
           // if (dataPoints[sensorId]->size() > pointsPerSensor[sensorId]) {
           usedSpace += sensorSettings->numBitsPerDataPoint;
           pointsPerSensor[sensorId] += 1;

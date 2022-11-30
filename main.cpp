@@ -110,7 +110,7 @@ void *PackagingThread(void *arguments)
         if (!dataList.empty())
         {
             // Read each data point from sensor file
-            int startingPos = 0;
+            unsigned int startingPos = 0;
             for (DataPoint *dataInfo : dataList)
             {
                 #ifdef DEBUG_P
@@ -130,8 +130,8 @@ void *PackagingThread(void *arguments)
                     sensorFile.seekg(dataInfo->fileIndex);
 
                     // Find the number of bytes for that type
-                    int numBits = sensors.sensorMap[dataInfo->sensor_id]->numBitsPerDataPoint;
-                    int numBytes = ceil(((float)numBits + (numBits % 8)) / 8);
+                    unsigned int numBits = sensors.sensorMap[dataInfo->sensor_id]->numBitsPerDataPoint;
+                    unsigned int numBytes = (numBits + 7) / 8;
 
                     // Read the bytes
                     buffer = (uint8_t *)malloc(numBytes);

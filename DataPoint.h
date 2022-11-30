@@ -3,8 +3,8 @@
 
 struct DataPoint {
   std::streampos fileIndex;
-  int sensor_id;
-  int numIncludes;
+  unsigned int sensor_id;
+  unsigned int numIncludes;
   unsigned int gradient;
   bool used;
 };

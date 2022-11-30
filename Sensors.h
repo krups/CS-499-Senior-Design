@@ -7,14 +7,14 @@
 
 class SensorSettings {
 public:
-  uint8_t priority;
-  uint8_t numSamplesPerDataPoint;
-  uint8_t numBitsPerSample;
-  uint16_t numBitsPerDataPoint;
+  unsigned int priority;
+  unsigned int numSamplesPerDataPoint;
+  unsigned int numBitsPerSample;
+  unsigned int numBitsPerDataPoint;
   int multiplier;
   SensorSettings();
-  SensorSettings(uint8_t priority, uint8_t numSamplesPerDataPoint, uint8_t numBitsPerSample);
-  SensorSettings(uint8_t priority, uint8_t numSamplesPerDataPoint, uint8_t numBitsPerSample, int multiplier);
+  SensorSettings(unsigned int priority, unsigned int numSamplesPerDataPoint, unsigned int numBitsPerSample);
+  SensorSettings(unsigned int priority, unsigned int numSamplesPerDataPoint, unsigned int numBitsPerSample, int multiplier);
 };
 
 class SensorMap {
@@ -22,9 +22,9 @@ public:
   SensorMap();
   ~SensorMap();
   unsigned int sensorMapSize;
-  std::map<int, SensorSettings*> sensorMap;
-  void addSensor(int id, uint8_t priority, uint8_t numSamplesPerDataPoint, uint8_t numBitsPerSample);
-  void addSensor(int id, uint8_t priority, uint8_t numSamplesPerDataPoint, uint8_t numBitsPerSample, int multiplier);
+  std::map<unsigned int, SensorSettings*> sensorMap;
+  void addSensor(unsigned int id, unsigned int priority, unsigned int numSamplesPerDataPoint, unsigned int numBitsPerSample);
+  void addSensor(unsigned int id, unsigned int priority, unsigned int numSamplesPerDataPoint, unsigned int numBitsPerSample, int multiplier);
 };
 
 #endif

@@ -8,7 +8,7 @@ SensorSettings::SensorSettings() {
   this->multiplier = -1;
 }
 
-SensorSettings::SensorSettings(uint8_t priority, uint8_t numSamplesPerDataPoint, uint8_t numBitsPerSample) {
+SensorSettings::SensorSettings(unsigned int priority, unsigned int numSamplesPerDataPoint, unsigned int numBitsPerSample) {
   this->priority = priority;
   this->numSamplesPerDataPoint = numSamplesPerDataPoint;
   this->numBitsPerSample = numBitsPerSample;
@@ -16,7 +16,7 @@ SensorSettings::SensorSettings(uint8_t priority, uint8_t numSamplesPerDataPoint,
   this->multiplier = -1;
 }
 
-SensorSettings::SensorSettings(uint8_t priority, uint8_t numSamplesPerDataPoint, uint8_t numBitsPerSample, int multiplier) {
+SensorSettings::SensorSettings(unsigned int priority, unsigned int numSamplesPerDataPoint, unsigned int numBitsPerSample, int multiplier) {
   this->priority = priority;
   this->numSamplesPerDataPoint = numSamplesPerDataPoint;
   this->numBitsPerSample = numBitsPerSample;
@@ -34,13 +34,13 @@ SensorMap::~SensorMap() {
   }
 }
 
-void SensorMap::addSensor(int id, uint8_t priority, uint8_t numSamplesPerDataPoint, uint8_t numBitsPerSample) {
+void SensorMap::addSensor(unsigned int id, unsigned int priority, unsigned int numSamplesPerDataPoint, unsigned int numBitsPerSample) {
   SensorSettings* newSensorSettings = new SensorSettings(priority, numSamplesPerDataPoint, numBitsPerSample);
   sensorMap[id] = newSensorSettings;
   sensorMapSize = sensorMap.size();
 }
 
-void SensorMap::addSensor(int id, uint8_t priority, uint8_t numSamplesPerDataPoint, uint8_t numBitsPerSample, int multiplier) {
+void SensorMap::addSensor(unsigned int id, unsigned int priority, unsigned int numSamplesPerDataPoint, unsigned int numBitsPerSample, int multiplier) {
   SensorSettings* newSensorSettings = new SensorSettings(priority, numSamplesPerDataPoint, numBitsPerSample, multiplier);
   sensorMap[id] = newSensorSettings;
   sensorMapSize = sensorMap.size();
