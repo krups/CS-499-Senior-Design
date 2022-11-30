@@ -36,7 +36,7 @@ void saveData(Data data, char *buf)
     sensorDataFile.open(path, std::ios::app | std::ios::binary);
     if (!sensorDataFile.fail())
     {
-        sensorDataFile.write(buf, sizeof(buf));
+        sensorDataFile.write(buf, data.getNumBytes());
         std::cout << "Saving line: " << data << " to file" << std::endl;
 #ifdef PRINT_DATA
         printf("Saved %d, %u to file!\n", data.getType(), data.getTimeStamp());

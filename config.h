@@ -46,7 +46,7 @@ const std::string PACKET_DATA_PATH = "./packets/"; // This directory must exist 
 #define ACC_ID 5
 #define ACC_PRIORITY 1
 #define ACC_NUM_SAMPLES_PER_DATA_POINT 3
-#define ACC_NUM_BITS_PER_SAMPLE 4
+#define ACC_NUM_BITS_PER_SAMPLE 8
 
 #define PRES_ID 6
 #define PRES_PRIORITY 1
