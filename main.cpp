@@ -127,6 +127,7 @@ void *PackagingThread(void *arguments)
                 if (sensorFile.is_open())
                 {
                     // Go to the line
+                    std::cout << "index: " << dataInfo->fileIndex << std::endl;
                     sensorFile.seekg(dataInfo->fileIndex);
 
                     // Find the number of bytes for that type
@@ -137,7 +138,7 @@ void *PackagingThread(void *arguments)
                     buffer = (uint8_t *)malloc(numBytes);
                     sensorFile.read((char *)buffer, numBytes);
                     if (!sensorFile)
-                        std::cout << "ERROR: only " << sensorFile.gcount() << " bytes could be read, " << numBytes << "expected\n";
+                        std::cout << "ERROR: only " << sensorFile.gcount() << " bytes could be read, " << numBytes << " expected\n";
                     else
                     {
                         // Add to the packet

@@ -70,6 +70,7 @@ void DataSelector::updateDataPoints()
       // If there were previously tracked data points
       if (dataPoints[sensorId]->size() != 0)
       {
+        std::cout << "CATCHING UP" << std::endl;
         // Open the file to the last known data point
         sensorFile.seekg((*dataPoints[sensorId])[dataPoints[sensorId]->size() - 1].fileIndex, std::ios_base::beg);
         // And discard the last data point so the read pointer is at the start of the next data point
@@ -80,12 +81,15 @@ void DataSelector::updateDataPoints()
       // Until the end of the file is reached
       while (sensorFile)
       {
+        std::cout << "MORE DATA" << std::endl;
         // Create a new DataPoint class and initialize its values
         DataPoint newDataPoint;
         newDataPoint.sensor_id = sensorId;
         newDataPoint.numIncludes = 0;
         newDataPoint.fileIndex = sensorFile.tellg();
         newDataPoint.used = false;
+
+        std::cout << "FILE INDEX: " << newDataPoint.fileIndex << std::endl;
 
         // Read the data so the read pointer advances
         memset(buffer, '\0', bufferSize + 1);
