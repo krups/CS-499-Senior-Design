@@ -286,20 +286,23 @@ std::vector<DataPoint *> *DataSelector::selectData()
     {
       if (iteration >= nextIterationPerSensor[sensorId])
       {
+          printf("1 num points for sensor %d: %d\n", sensorId, dataPoints[sensorId]->size());
+          printf("2 num picked for this sensor: %d\n", pointsPerSensor[sensorId]);
+          printf("3 usedSpace: %d\n", usedSpace);
+          printf("4 total space: %d\n", PACKET_SIZE_BITS);
+          printf("----\n");
         if ((usedSpace + sensorSettings->numBitsPerDataPoint) <= (PACKET_SIZE_BITS))
         {
-          printf("1 numPoints for this sensor: %d\n", dataPoints[sensorId]->size());
-          printf("2 num picked for this sensor: %d\n", pointsPerSensor[sensorId]);
-          printf("---- added point for sensor %d on iteration %d\n", sensorId, iteration);
-          // if (dataPoints[sensorId]->size() > pointsPerSensor[sensorId]) {
-          usedSpace += sensorSettings->numBitsPerDataPoint;
-          pointsPerSensor[sensorId] += 1;
-          nextIterationPerSensor[sensorId] += sensorRelativeSpacing[sensorId];
+          if (dataPoints[sensorId]->size() > pointsPerSensor[sensorId]) {
+            printf("added point for sensor %d on iteration %d\n", sensorId, iteration);
+            usedSpace += sensorSettings->numBitsPerDataPoint;
+            pointsPerSensor[sensorId] += 1;
+            nextIterationPerSensor[sensorId] += sensorRelativeSpacing[sensorId];
 #ifdef DATA_SEL_P
-          printf("added point for sensor %d on iteration %d\n", sensorId, iteration);
+            printf("added point for sensor %d on iteration %d\n", sensorId, iteration);
 #endif
-          moreData = true;
-          // }
+            moreData = true;
+          }
         }
       }
     }
