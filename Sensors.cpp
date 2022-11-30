@@ -5,7 +5,7 @@ SensorSettings::SensorSettings() {
   this->numSamplesPerDataPoint = 0;
   this->numBitsPerSample = 0;
   this->numBitsPerDataPoint = 0;
-  this->multiplier = -1;
+  this->multiplier = 1;
 }
 
 SensorSettings::SensorSettings(unsigned int priority, unsigned int numSamplesPerDataPoint, unsigned int numBitsPerSample) {
@@ -13,7 +13,7 @@ SensorSettings::SensorSettings(unsigned int priority, unsigned int numSamplesPer
   this->numSamplesPerDataPoint = numSamplesPerDataPoint;
   this->numBitsPerSample = numBitsPerSample;
   this->numBitsPerDataPoint = SENSOR_METADATA_BITS + (numSamplesPerDataPoint * numBitsPerSample);
-  this->multiplier = -1;
+  this->multiplier = 1;
 }
 
 SensorSettings::SensorSettings(unsigned int priority, unsigned int numSamplesPerDataPoint, unsigned int numBitsPerSample, int multiplier) {
