@@ -58,24 +58,21 @@ int main()
     {
       if (sensors.sensorMap[sensorId] != nullptr)
       {
-        std::cout << sensorId << " " << sensors.sensorMap[sensorId]->numSamplesPerDataPoint << " " << sensors.sensorMap[sensorId]->numBitsPerSample << std::endl;
+        std::cout << sensorId << " " << sensors.sensorMap[sensorId]->numSamplesPerDataPoint << " " << sensors.sensorMap[sensorId]->numBitsPerSample << " " << bitIndex << std::endl;
 
-        std::cout << sensorId << ", ";
+        std::cout << sensorId << " (" << bitIndex << ")";
 
         unsigned int timestamp = 0;
         copyBitsB2L((uint8_t *)data, bitIndex, (uint8_t *)&timestamp, (sizeof(unsigned int) * 8) - SENSOR_TIMESTAMP_BITS, sizeof(unsigned int), SENSOR_TIMESTAMP_BITS);
         bitIndex += SENSOR_TIMESTAMP_BITS;
-        std::cout << timestamp;
+        std::cout << ", " << timestamp << " (" << bitIndex << ")";
 
-
-
-        for (int i = 0; i < sensors.sensorMap[sensorId]->numSamplesPerDataPoint; i++)
+        for (unsigned i = 0; i < sensors.sensorMap[sensorId]->numSamplesPerDataPoint; i++)
         {
           unsigned int value = 0;
-          std::cout << ", ";
           copyBitsB2L((uint8_t *)data, bitIndex, (uint8_t *)&value, (sizeof(unsigned int) * 8) - sensors.sensorMap[sensorId]->numBitsPerSample, sizeof(unsigned int), sensors.sensorMap[sensorId]->numBitsPerSample);
           bitIndex += sensors.sensorMap[sensorId]->numBitsPerSample;
-          std:: cout << value;
+          std:: cout << ", " << value << " (" << bitIndex << ")";
         }
 
         std::cout << std::endl;
