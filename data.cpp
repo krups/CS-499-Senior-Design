@@ -95,7 +95,7 @@ Data::Data(char *line, SensorMap *sensors)
     }
 
     bits_per_sample = params->numBitsPerSample;
-    num_bytes = ceil(((float)params->numBitsPerDataPoint + (params->numBitsPerDataPoint % 8)) / 8);
+    num_bytes = (params->numBitsPerDataPoint + 7) / 8;
 }
 
 /**

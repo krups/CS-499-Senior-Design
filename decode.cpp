@@ -53,6 +53,9 @@ int main()
     unsigned int sensorId = 0;
 
     copyBitsB2L((uint8_t *)data, bitIndex, (uint8_t *)&sensorId, (sizeof(unsigned int) * 8) - SENSOR_ID_BITS, sizeof(unsigned int), SENSOR_ID_BITS);
+
+    std::cout << "read sensorId: " << sensorId << std::endl;
+
     bitIndex += SENSOR_ID_BITS;
     if (sensorId != 0)
     {
