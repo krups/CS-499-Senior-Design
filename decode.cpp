@@ -61,7 +61,7 @@ int main()
     {
       if (sensors.sensorMap[sensorId] != nullptr)
       {
-        std::cout << sensorId << " " << sensors.sensorMap[sensorId]->numSamplesPerDataPoint << " " << sensors.sensorMap[sensorId]->numBitsPerSample << " " << bitIndex << std::endl;
+        std::cout << sensorId << " " << sensors.sensorMap[sensorId]->numSamplesPerDataPoint << " " << sensors.sensorMap[sensorId]->numBitsPerSample << " (" << bitIndex << ")" << std::endl;
 
         std::cout << sensorId << " (" << bitIndex << ")";
 
