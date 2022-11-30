@@ -40,7 +40,7 @@ int main()
   }
   else
   {
-    std::cout << "Error opening packet file." << std::endl;
+    std::cout << "Error opening packet file" << std::endl;
     return 1;
   }
 
@@ -54,28 +54,24 @@ int main()
 
     copyBitsB2L((uint8_t *)data, bitIndex, (uint8_t *)&sensorId, (sizeof(unsigned int) * 8) - SENSOR_ID_BITS, sizeof(unsigned int), SENSOR_ID_BITS);
 
-    std::cout << "read sensorId: " << sensorId << std::endl;
-
     bitIndex += SENSOR_ID_BITS;
     if (sensorId != 0)
     {
       if (sensors.sensorMap[sensorId] != nullptr)
       {
-        std::cout << sensorId << " " << sensors.sensorMap[sensorId]->numSamplesPerDataPoint << " " << sensors.sensorMap[sensorId]->numBitsPerSample << " (" << bitIndex << ")" << std::endl;
-
-        std::cout << sensorId << " (" << bitIndex << ")";
+        std::cout << sensorId;
 
         unsigned int timestamp = 0;
         copyBitsB2L((uint8_t *)data, bitIndex, (uint8_t *)&timestamp, (sizeof(unsigned int) * 8) - SENSOR_TIMESTAMP_BITS, sizeof(unsigned int), SENSOR_TIMESTAMP_BITS);
         bitIndex += SENSOR_TIMESTAMP_BITS;
-        std::cout << ", " << timestamp << " (" << bitIndex << ")";
+        std::cout << ", " << timestamp;
 
         for (unsigned i = 0; i < sensors.sensorMap[sensorId]->numSamplesPerDataPoint; i++)
         {
           unsigned int value = 0;
           copyBitsB2L((uint8_t *)data, bitIndex, (uint8_t *)&value, (sizeof(unsigned int) * 8) - sensors.sensorMap[sensorId]->numBitsPerSample, sizeof(unsigned int), sensors.sensorMap[sensorId]->numBitsPerSample);
           bitIndex += sensors.sensorMap[sensorId]->numBitsPerSample;
-          std:: cout << ", " << value << " (" << bitIndex << ")";
+          std:: cout << ", " << value;
         }
 
         std::cout << std::endl;
