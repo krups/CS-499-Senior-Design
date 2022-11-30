@@ -96,7 +96,7 @@ void loop()
     led.show();
     for (int p = 0; p < 200; p++)
     {
-        int option = 1;
+        int option = random() % 3;
         switch (option)
         {
         case 0:
