@@ -9,6 +9,7 @@
 //    Packet Configuration
 //
 //////////////////////////////
+// Packet size in bytes
 #define PACKET_SIZE 340
 #define PACKET_SIZE_BITS PACKET_SIZE * 8
 
@@ -101,8 +102,8 @@ const std::string PACKET_DATA_PATH = "./packets/"; // This directory must exist 
 #define NEW_DATA_RATIO 0.8
 #define POINT_INCLUDE_LIMIT 1
 
-#define NEW_DATA_GRADIENT_SELECT false
-#define OLD_DATA_GRADIENT_SELECT false
+#define NEW_DATA_GRADIENT_SELECT true
+#define OLD_DATA_GRADIENT_SELECT true
 
 //////////////////////////////
 //
@@ -115,7 +116,7 @@ const std::string PACKET_DATA_PATH = "./packets/"; // This directory must exist 
 #define PACKET_P
 #define VALIDITY_P
 // #define DEBUG_P
-// #define DATA_SEL_P // debug statements in DataSelector.cpp
+#define DATA_SEL_P // debug statements in DataSelector.cpp
 #endif
 
 #endif
