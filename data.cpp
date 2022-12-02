@@ -89,8 +89,12 @@ Data::Data(char *line, SensorMap *sensors)
         }
         int value = atoi(tokens[i]);
 
-        if (params->multiplier != -1)
+        if (params->offset != 0)
+            value += params->offset;
+
+        if (params->multiplier != 1)
             value *= params->multiplier;
+
         data.push_back((int)value);
     }
 
@@ -163,12 +167,12 @@ std::vector<u_int16_t> Data::getData()
     return data;
 }
 
-void Data::createBitBuffer(char *buf)
+void Data::createBitBuffer(char *buf, SensorMap sensors)
 {
     int bufBitPos = 0;
     int id = type;
     int ts = time_stamp;
-    std::vector<u_int16_t> points = data;
+    std::vector<int> points = data;
     // printf("%d\n", bufBitPos);
     copyBitsL2B((uint8_t *)&id, (sizeof(int) * 8) - SENSOR_ID_BITS, sizeof(int), (uint8_t *)buf, bufBitPos, SENSOR_ID_BITS);
     bufBitPos += SENSOR_ID_BITS;

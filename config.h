@@ -70,6 +70,7 @@ const std::string PACKET_DATA_PATH = "./packets/"; // This directory must exist 
 #define PRES_PRIORITY 1
 #define PRES_NUM_SAMPLES_PER_DATA_POINT 5
 #define PRES_NUM_BITS_PER_SAMPLE 11
+#define PRES_OFFSET 0
 #define PRES_MULT 10
 
 // Spectrometer

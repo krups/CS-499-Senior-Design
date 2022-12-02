@@ -17,7 +17,7 @@ int main()
   sensors.addSensor(GPS_ID, GPS_PRIORITY, GPS_NUM_SAMPLES_PER_DATA_POINT, GPS_NUM_BITS_PER_SAMPLE);
   sensors.addSensor(RMC_ID, RMC_PRIORITY, RMC_NUM_SAMPLES_PER_DATA_POINT, RMC_NUM_BITS_PER_SAMPLE);
   sensors.addSensor(ACC_ID, ACC_PRIORITY, ACC_NUM_SAMPLES_PER_DATA_POINT, ACC_NUM_BITS_PER_SAMPLE);
-  sensors.addSensor(PRES_ID, PRES_PRIORITY, PRES_NUM_SAMPLES_PER_DATA_POINT, PRES_NUM_BITS_PER_SAMPLE, PRES_MULT);
+  sensors.addSensor(PRES_ID, PRES_PRIORITY, PRES_NUM_SAMPLES_PER_DATA_POINT, PRES_NUM_BITS_PER_SAMPLE, PRES_OFFSET, PRES_MULT);
   sensors.addSensor(SPEC_ID, SPEC_PRIORITY, SPEC_NUM_SAMPLES_PER_DATA_POINT, SPEC_NUM_BITS_PER_SAMPLE);
 
   std::ifstream packetFile;
@@ -71,6 +71,15 @@ int main()
           unsigned int value = 0;
           copyBitsB2L((uint8_t *)data, bitIndex, (uint8_t *)&value, (sizeof(unsigned int) * 8) - sensors.sensorMap[sensorId]->numBitsPerSample, sizeof(unsigned int), sensors.sensorMap[sensorId]->numBitsPerSample);
           bitIndex += sensors.sensorMap[sensorId]->numBitsPerSample;
+
+          if (sensors.sensorMap[sensorId]->multiplier != 1) {
+            value /= sensors.sensorMap[sensorId]->multiplier;
+          }
+
+          if (sensors.sensorMap[sensorId]->offset != 0) {
+            value -= sensors.sensorMap[sensorId]->offset;
+          }
+
           std:: cout << ", " << value;
         }
 
