@@ -167,6 +167,9 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
       {
         if ((*dataPoints[sensorId])[dataPointIndex].used == false)
         {
+#ifdef DATA_SEL_P
+          printf("sensor %d added point\n", sensorId);
+#endif
           (*dataPoints[sensorId])[dataPointIndex].used = true;
           tempDataPointList->push_back(&(*dataPoints[sensorId])[dataPointIndex]);
           numPointsSelected++;
@@ -183,6 +186,9 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
             {
               if ((*dataPoints[sensorId])[retryDataPointIndexUp].used == false)
               {
+#ifdef DATA_SEL_P
+                printf("sensor %d added point retry up\n", sensorId);
+#endif
                 (*dataPoints[sensorId])[retryDataPointIndexUp].used = true;
                 tempDataPointList->push_back(&(*dataPoints[sensorId])[retryDataPointIndexUp]);
                 numPointsSelected++;
@@ -195,6 +201,9 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
             {
               if ((*dataPoints[sensorId])[retryDataPointIndexDown].used == false)
               {
+#ifdef DATA_SEL_P
+                printf("sensor %d added point retry down\n", sensorId);
+#endif
                 (*dataPoints[sensorId])[retryDataPointIndexDown].used = true;
                 tempDataPointList->push_back(&(*dataPoints[sensorId])[retryDataPointIndexDown]);
                 numPointsSelected++;
@@ -216,6 +225,11 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
     {
       break;
     }
+  }
+
+  unsigned int dataPointVectorSize = dataPoints[sensorId]->size();
+  for (unsigned int dataPointIndex; dataPointIndex < dataPointVectorSize; dataPointIndex++) {
+    (*dataPoints[sensorId])[dataPointIndex].used = false;
   }
 
   return numPointsSelected;
