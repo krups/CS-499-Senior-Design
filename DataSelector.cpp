@@ -155,20 +155,29 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
 
   bool pointPicked = false;
 
+#ifdef DATA_SEL_P
+  printf("total gradient: %d\n", totalGradient);
+  printf("gradient spacing: %f\n", gradientSpacing);
+#endif
+
   for (unsigned int index = 0; index < numData; index++)
   {
-    int targetGradient = (gradientSpacing * offset) + (gradientSpacing * index);
+    unsigned int targetGradient = (unsigned int) ((gradientSpacing * offset) + (gradientSpacing * index));
+
+#ifdef DATA_SEL_P
+    printf("target gradient: %d\n", targetGradient);
+#endif
 
     for (unsigned int dataPointIndex = startInclusive; dataPointIndex < endExclusive; dataPointIndex++)
     {
       targetGradient -= (*dataPoints[sensorId])[dataPointIndex].gradient;
 
-      if (targetGradient <= 0)
+      if (targetGradient > totalGradient) // This means that it went below 0 and overflowed
       {
         if ((*dataPoints[sensorId])[dataPointIndex].used == false)
         {
 #ifdef DATA_SEL_P
-          printf("sensor %d added point\n", sensorId);
+          printf("sensor %d added point %d\n", sensorId, dataPointIndex);
 #endif
           (*dataPoints[sensorId])[dataPointIndex].used = true;
           tempDataPointList->push_back(&(*dataPoints[sensorId])[dataPointIndex]);
@@ -187,7 +196,7 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
               if ((*dataPoints[sensorId])[retryDataPointIndexUp].used == false)
               {
 #ifdef DATA_SEL_P
-                printf("sensor %d added point retry up\n", sensorId);
+                printf("sensor %d added point %d retry up\n", sensorId, retryDataPointIndexUp);
 #endif
                 (*dataPoints[sensorId])[retryDataPointIndexUp].used = true;
                 tempDataPointList->push_back(&(*dataPoints[sensorId])[retryDataPointIndexUp]);
@@ -202,7 +211,7 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
               if ((*dataPoints[sensorId])[retryDataPointIndexDown].used == false)
               {
 #ifdef DATA_SEL_P
-                printf("sensor %d added point retry down\n", sensorId);
+                printf("sensor %d added point %d retry down\n", sensorId, retryDataPointIndexDown);
 #endif
                 (*dataPoints[sensorId])[retryDataPointIndexDown].used = true;
                 tempDataPointList->push_back(&(*dataPoints[sensorId])[retryDataPointIndexDown]);
