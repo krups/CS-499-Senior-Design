@@ -265,6 +265,9 @@ unsigned int DataSelector::selectDataPointsIndex(unsigned int sensorId, unsigned
   double dataPointIndex = startInclusive + (dataSpacing * offset);
   for (unsigned int i = 0; i < numData; i++)
   {
+#ifdef DATA_SEL_P
+    printf("sensor %d added point\n", sensorId);
+#endif
     tempDataPointList->push_back(&(*dataPoints[sensorId])[(int)dataPointIndex]);
     numPointsSelected++;
 
