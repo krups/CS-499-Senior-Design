@@ -517,6 +517,11 @@ std::vector<DataPoint *> *DataSelector::selectData()
 // Called by the packet building thread to indicate that the previous list of data points was used
 void DataSelector::markUsed()
 {
+  // Only mark data if there is any data to mark
+  if (previousData == nullptr) {
+    return;
+  }
+
   // For each data point in the previous list of data points
   unsigned int previousDataSize = previousData->size();
   for (unsigned int previousDataIndex = 0; previousDataIndex < previousDataSize; previousDataIndex++)
