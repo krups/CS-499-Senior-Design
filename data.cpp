@@ -167,7 +167,7 @@ std::vector<u_int16_t> Data::getData()
     return data;
 }
 
-void Data::createBitBuffer(char *buf, SensorMap sensors)
+void Data::createBitBuffer(char *buf)
 {
     int bufBitPos = 0;
     int id = type;
