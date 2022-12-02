@@ -149,11 +149,11 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
     totalGradient += (*dataPoints[sensorId])[dataPointIndex].gradient;
   }
 
-  double gradientSpacing = totalGradient / numData;
+  double gradientSpacing = (double) totalGradient / (double) numData;
 
   unsigned int numPointsSelected = 0;
 
-  bool pointPicked = false;
+  bool allDataSelected = false;
 
 #ifdef DATA_SEL_P
   printf("total gradient: %d\n", totalGradient);
@@ -162,6 +162,12 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
 
   for (unsigned int index = 0; index < numData; index++)
   {
+    if (allDataSelected) {
+      break;
+    }
+
+    bool pointPicked = false;
+
     unsigned int targetGradient = (unsigned int) ((gradientSpacing * offset) + (gradientSpacing * index));
 
 #ifdef DATA_SEL_P
@@ -226,13 +232,8 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
 
       if (pointPicked == false)
       {
-        break;
+        allDataSelected = true;
       }
-    }
-
-    if (pointPicked == false)
-    {
-      break;
     }
   }
 
