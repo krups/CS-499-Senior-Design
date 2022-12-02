@@ -157,20 +157,10 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
 
   for (unsigned int index = 0; index < numData; index++)
   {
-    if (pointPicked == false)
-    {
-      break;
-    }
-
     int targetGradient = (gradientSpacing * offset) + (gradientSpacing * index);
 
     for (unsigned int dataPointIndex = startInclusive; dataPointIndex < endExclusive; dataPointIndex++)
     {
-      if (pointPicked == false)
-      {
-        break;
-      }
-
       targetGradient -= (*dataPoints[sensorId])[dataPointIndex].gradient;
 
       if (targetGradient <= 0)
@@ -215,6 +205,16 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
           }
         }
       }
+
+      if (pointPicked == false)
+      {
+        break;
+      }
+    }
+
+    if (pointPicked == false)
+    {
+      break;
     }
   }
 
