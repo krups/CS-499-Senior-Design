@@ -178,10 +178,6 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
     {
       targetGradient -= (*dataPoints[sensorId])[dataPointIndex].gradient;
 
-#ifdef DATA_SEL_P
-      printf("trgt: %d\n", targetGradient);
-#endif
-
       if (targetGradient > totalGradient) // This means that it went below 0 and overflowed
       {
         if ((*dataPoints[sensorId])[dataPointIndex].used == false)
