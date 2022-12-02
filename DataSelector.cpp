@@ -229,11 +229,11 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
           }
         }
       }
+    }
 
-      if (pointPicked == false)
-      {
-        allDataSelected = true;
-      }
+    if (pointPicked == false)
+    {
+      allDataSelected = true;
     }
   }
 
