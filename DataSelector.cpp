@@ -86,12 +86,9 @@ void DataSelector::updateDataPoints()
         sensorFile.read(buffer, bufferSize);
       }
 
-      // Until the end of the file is reached
+      // While no error in the file has been occurred
       while (sensorFile)
       {
-#ifdef DATA_SEL_P
-        std::cout << "MORE DATA " << sensorId << std::endl;
-#endif
         // Create a new DataPoint class and initialize its values
         DataPoint newDataPoint;
         newDataPoint.sensor_id = sensorId;
@@ -99,18 +96,22 @@ void DataSelector::updateDataPoints()
         newDataPoint.fileIndex = sensorFile.tellg();
         newDataPoint.used = false;
 
-#ifdef DATA_SEL_P
-        std::cout << "FILE INDEX: " << newDataPoint.fileIndex << std::endl;
-#endif
-
         // Read the data so the read pointer advances
         memset(buffer, '\0', bufferSize + 1);
         sensorFile.read(buffer, bufferSize);
 
         newDataPoint.gradient = 1;
 
-        // Add the new DataPoint to the vector of data points for that sensor
-        dataPoints[sensorId]->push_back(newDataPoint);
+        // If the file is still good after the read, then this point was valid
+        if (sensorFile) {
+          // Add the new DataPoint to the vector of data points for that sensor
+          dataPoints[sensorId]->push_back(newDataPoint);
+
+#ifdef DATA_SEL_P
+          std::cout << "MORE DATA " << sensorId << std::endl;
+          std::cout << "FILE INDEX: " << newDataPoint.fileIndex << std::endl;
+#endif
+        }
       }
     }
 
@@ -129,6 +130,8 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
 #ifdef DATA_SEL_P
   printf("endExclusive - startInclusive: %u\n", (endExclusive - startInclusive));
   printf("numData: %u\n", numData);
+  printf("startInclusive: %u\n", startInclusive);
+  printf("endExclusive: %u\n", endExclusive);
   printf("offset: %lf\n", offset);
   printf("sensorId: %d\n", sensorId);
 #endif
@@ -254,6 +257,8 @@ unsigned int DataSelector::selectDataPointsIndex(unsigned int sensorId, unsigned
 #ifdef DATA_SEL_P
   printf("endExclusive - startInclusive: %u\n", (endExclusive - startInclusive));
   printf("numData: %u\n", numData);
+  printf("startInclusive: %u\n", startInclusive);
+  printf("endExclusive: %u\n", endExclusive);
   printf("offset: %lf\n", offset);
   printf("sensorId: %d\n", sensorId);
 #endif
