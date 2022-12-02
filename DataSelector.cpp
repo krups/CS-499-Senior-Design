@@ -90,20 +90,21 @@ void DataSelector::updateDataPoints()
       while (sensorFile)
       {
         // Create a new DataPoint class and initialize its values
-        DataPoint newDataPoint;
-        newDataPoint.sensor_id = sensorId;
-        newDataPoint.numIncludes = 0;
-        newDataPoint.fileIndex = sensorFile.tellg();
-        newDataPoint.used = false;
+        unsigned int fileIndex = sensorFile.tellg();
 
         // Read the data so the read pointer advances
         memset(buffer, '\0', bufferSize + 1);
         sensorFile.read(buffer, bufferSize);
 
-        newDataPoint.gradient = 1;
-
         // If the file is still good after the read, then this point was valid
         if (sensorFile) {
+          DataPoint newDataPoint;
+          newDataPoint.sensor_id = sensorId;
+          newDataPoint.numIncludes = 0;
+          newDataPoint.fileIndex = fileIndex;
+          newDataPoint.used = false;
+          newDataPoint.gradient = 1;
+
           // Add the new DataPoint to the vector of data points for that sensor
           dataPoints[sensorId]->push_back(newDataPoint);
 
