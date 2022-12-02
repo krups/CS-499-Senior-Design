@@ -142,7 +142,7 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
     return 0;
   }
 
-  int totalGradient = 0;
+  unsigned int totalGradient = 0;
 
   for (unsigned int dataPointIndex = startInclusive; dataPointIndex < endExclusive; dataPointIndex++)
   {
@@ -177,6 +177,10 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
     for (unsigned int dataPointIndex = startInclusive; dataPointIndex < endExclusive; dataPointIndex++)
     {
       targetGradient -= (*dataPoints[sensorId])[dataPointIndex].gradient;
+
+#ifdef DATA_SEL_P
+      printf("trgt: %d\n", targetGradient);
+#endif
 
       if (targetGradient > totalGradient) // This means that it went below 0 and overflowed
       {
@@ -229,9 +233,13 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
           }
         }
       }
+
+      if (pointPicked) {
+        break;
+      }
     }
 
-    if (pointPicked == false)
+    if (!pointPicked)
     {
       allDataSelected = true;
     }
