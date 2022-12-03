@@ -40,7 +40,7 @@ const std::string PACKET_DATA_PATH = "./packets/"; // This directory must exist 
 #define TC_PRIORITY 1
 #define TC_NUM_SAMPLES_PER_DATA_POINT 4
 #define TC_NUM_BITS_PER_SAMPLE 11
-#define TC_OFFSET (-TC_LOW)
+#define TC_OFFSET (-1 * TC_LOW)
 #define TC_MULT 1
 
 // IMU Sensor
@@ -64,8 +64,8 @@ const std::string PACKET_DATA_PATH = "./packets/"; // This directory must exist 
 #define RMC_PRIORITY 1
 #define RMC_NUM_SAMPLES_PER_DATA_POINT 5
 #define RMC_NUM_BITS_PER_SAMPLE 16
-#define GPS_OFFSET 0
-#define GPS_MULT 1
+#define RMC_OFFSET 0
+#define RMC_MULT 1
 
 // ACC sensor
 #define ACC_ID 5
