@@ -162,7 +162,7 @@ u_int32_t Data::getTimeStamp()
  *
  * @return u_int16_t*
  */
-std::vector<u_int16_t> Data::getData()
+std::vector<int> Data::getData()
 {
     return data;
 }

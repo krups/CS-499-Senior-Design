@@ -51,7 +51,7 @@ void saveData(Data data, char *buf)
 
 bool checkValid(Data data)
 {
-    std::vector<u_int16_t> points = data.getData();
+    std::vector<int> points = data.getData();
     for (int i = 0; i < data.getNumVals(); i++)
     { // Add checks to correspond with validity parameters in config.h
 
