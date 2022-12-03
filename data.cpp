@@ -87,7 +87,7 @@ Data::Data(char *line, SensorMap *sensors)
             msg.append(tokens[i]);
             throw msg;
         }
-        double value = stod(tokens[i]);
+        double value = std::stod(tokens[i]);
 
         if (params->offset != 0)
             value += params->offset;
