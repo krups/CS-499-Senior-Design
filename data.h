@@ -13,7 +13,7 @@
 class Data
 {
 public:
-    Data(char *line);
+    Data(char *line, SensorMap *sensors);
     Data(const Data &x);
     int getType();
     int getNumVals();
