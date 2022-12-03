@@ -11,7 +11,7 @@
 //////////////////////////////
 // Packet size in bytes
 #define PACKET_SIZE 340
-#define PACKET_SIZE_BITS PACKET_SIZE * 8
+#define PACKET_SIZE_BITS (PACKET_SIZE * 8)
 
 // Sensor metadata size in bytes
 #define SENSOR_ID_BITS 4
@@ -125,10 +125,10 @@ const std::string PACKET_DATA_PATH = "./packets/"; // This directory must exist 
 #define DEBUG // comment/uncomment to enable/disable debugging logs
 #ifdef DEBUG
 // #define PRINT_DATA
-#define PACKET_P
+//#define PACKET_P
 #define VALIDITY_P
 // #define DEBUG_P
-#define DATA_SEL_P // debug statements in DataSelector.cpp
+//#define DATA_SEL_P // debug statements in DataSelector.cpp
 #endif
 
 #endif
