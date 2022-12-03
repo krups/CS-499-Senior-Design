@@ -87,7 +87,7 @@ Data::Data(char *line, SensorMap *sensors)
             msg.append(tokens[i]);
             throw msg;
         }
-        int value = atoi(tokens[i]);
+        double value = stod(tokens[i]);
 
         if (params->offset != 0)
             value += params->offset;
@@ -95,7 +95,7 @@ Data::Data(char *line, SensorMap *sensors)
         if (params->multiplier != 1)
             value *= params->multiplier;
 
-        data.push_back((int)value);
+        data.push_back((int) value);
     }
 
     bits_per_sample = params->numBitsPerSample;

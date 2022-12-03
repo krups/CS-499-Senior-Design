@@ -73,14 +73,20 @@ int main()
           bitIndex += sensors.sensorMap[sensorId]->numBitsPerSample;
 
           if (sensors.sensorMap[sensorId]->multiplier != 1) {
-            value /= sensors.sensorMap[sensorId]->multiplier;
-          }
+            double valuePrecise = ((double) value) / sensors.sensorMap[sensorId]->multiplier;
 
-          if (sensors.sensorMap[sensorId]->offset != 0) {
-            value -= sensors.sensorMap[sensorId]->offset;
-          }
+            if (sensors.sensorMap[sensorId]->offset != 0) {
+              valuePrecise -= sensors.sensorMap[sensorId]->offset;
+            }
+
+            std:: cout << ", " << valuePrecise;
+          } else {
+            if (sensors.sensorMap[sensorId]->offset != 0) {
+              value -= sensors.sensorMap[sensorId]->offset;
+            }
 
           std:: cout << ", " << value;
+          }
         }
 
         std::cout << std::endl;
