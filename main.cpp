@@ -96,8 +96,6 @@ void *PackagingThread(void *arguments)
     // Constantly create new packets
     while (true)
     {
-        delay(6000);
-
         // Initialize newPacket to zeros
         memset(newPacket, '\0', PACKET_SIZE);
 
