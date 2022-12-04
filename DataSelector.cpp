@@ -5,6 +5,7 @@
 DataSelector::DataSelector()
 {
   sensorPriorityLCM = 1;
+  nextDataPointID = 0;
 }
 
 DataSelector::DataSelector(SensorMap *sensors)
@@ -12,6 +13,7 @@ DataSelector::DataSelector(SensorMap *sensors)
   // Allocate memory and set initial variable values
   this->sensors = sensors;
   sensorPriorityLCM = 1;
+  nextDataPointID = 0;
 
   for (auto [sensorId, sensorSettings] : sensors->sensorMap)
   {
@@ -104,6 +106,9 @@ void DataSelector::updateDataPoints()
           newDataPoint.fileIndex = fileIndex;
           newDataPoint.used = false;
           newDataPoint.gradient = 1;
+          newDataPoint.ID = nextDataPointID;
+
+          nextDataPointID++;
 
           // Add the new DataPoint to the vector of data points for that sensor
           dataPoints[sensorId]->push_back(newDataPoint);
@@ -535,8 +540,8 @@ void DataSelector::markUsed()
     unsigned int sensorDataSize = dataPoints[targetDataPoint->sensor_id]->size();
     for (unsigned int sensorDataIndex = 0; sensorDataIndex < sensorDataSize; sensorDataIndex++)
     {
-      // If the pointers match, then the object has been found
-      if ((void *)&((*dataPoints[targetDataPoint->sensor_id])[sensorDataIndex]) == (void *)targetDataPoint)
+      // If the IDs match, then the object has been found
+      if ((*dataPoints[targetDataPoint->sensor_id])[sensorDataIndex].ID == targetDataPoint->ID)
       {
         // If the index of the removed point was greater than the next unused data point from this sensor
         if (sensorDataIndex >= nextUnusedDataPointIndex[targetDataPoint->sensor_id])

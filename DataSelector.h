@@ -28,6 +28,8 @@ class DataSelector {
     std::vector<DataPoint*>* currentData;
     std::vector<DataPoint*>* previousData;
 
+    unsigned int nextDataPointID;
+
     std::unordered_map<unsigned int, std::vector<DataPoint>*> dataPoints;
     std::unordered_map<unsigned int, unsigned int> nextUnusedDataPointIndex;
 
