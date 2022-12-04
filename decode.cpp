@@ -68,7 +68,7 @@ int main()
 
         for (unsigned i = 0; i < sensors.sensorMap[sensorId]->numSamplesPerDataPoint; i++)
         {
-          unsigned int value = 0;
+          int value = 0;
           copyBitsB2L((uint8_t *)data, bitIndex, (uint8_t *)&value, (sizeof(unsigned int) * 8) - sensors.sensorMap[sensorId]->numBitsPerSample, sizeof(unsigned int), sensors.sensorMap[sensorId]->numBitsPerSample);
           bitIndex += sensors.sensorMap[sensorId]->numBitsPerSample;
 
