@@ -68,7 +68,7 @@ bool checkValid(Data data)
         if (data.getType() == TC_ID && (points[i] < (int) ((TC_LOW + TC_OFFSET) * TC_MULT) || points[i] > (int) ((TC_MAX + TC_OFFSET) * TC_MULT)))
         {
 #ifdef VALIDITY_P
-            printf("Error %u: TC validity check failed with '%d = %u'!\n", data.getTimeStamp(), i, points[i]);
+            printf("Error %u: TC validity check failed with '%d = %d'!\n", data.getTimeStamp(), i, points[i]);
 #endif
             return false;
         }
@@ -77,7 +77,7 @@ bool checkValid(Data data)
         if (data.getType() == ACC_ID && (points[i] < (int) ((ACC_LOW + ACC_OFFSET) * ACC_MULT) || points[i] > (int) ((ACC_HIGH + ACC_OFFSET) * ACC_MULT)))
         {
 #ifdef VALIDITY_P
-            printf("Error %u: ACC validity check failed with '%d = %u'!\n", data.getTimeStamp(), i, points[i]);
+            printf("Error %u: ACC validity check failed with '%d = %d'!\n", data.getTimeStamp(), i, points[i]);
 #endif
             return false;
         }
