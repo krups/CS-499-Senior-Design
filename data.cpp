@@ -90,10 +90,10 @@ Data::Data(char *line, SensorMap *sensors)
         double value = std::stod(tokens[i]);
 
         if (params->offset != 0)
-            value += params->offset;
+            value += (double) params->offset;
 
         if (params->multiplier != 1)
-            value *= params->multiplier;
+            value *= (double) params->multiplier;
 
         data.push_back((int) value);
     }
