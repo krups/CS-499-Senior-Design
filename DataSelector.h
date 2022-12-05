@@ -32,5 +32,6 @@ class DataSelector {
 
     std::unordered_map<unsigned int, std::vector<DataPoint>*> dataPoints;
     std::unordered_map<unsigned int, unsigned int> nextUnusedDataPointIndex;
+    std::unordered_map<unsigned int, std::streampos> lastDataPointReadIndex;
 
 };
