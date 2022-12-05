@@ -72,7 +72,7 @@ const std::string PACKET_DATA_PATH = "./packets/"; // This directory must exist 
 // TC Sensors
 #define TC_ID 5
 #define TC_PRIORITY 1
-#define TC_NUM_SAMPLES_PER_DATA_POINT 4
+#define TC_NUM_SAMPLES_PER_DATA_POINT 6
 #define TC_NUM_BITS_PER_SAMPLE 11
 #define TC_OFFSET (-1 * TC_LOW)
 #define TC_MULT 1
@@ -81,9 +81,9 @@ const std::string PACKET_DATA_PATH = "./packets/"; // This directory must exist 
 #define PRES_ID 6
 #define PRES_PRIORITY 1
 #define PRES_NUM_SAMPLES_PER_DATA_POINT 5
-#define PRES_NUM_BITS_PER_SAMPLE 11
+#define PRES_NUM_BITS_PER_SAMPLE 14
 #define PRES_OFFSET 0
-#define PRES_MULT 10
+#define PRES_MULT 1
 
 // Spectrometer
 #define SPEC_ID 7
@@ -105,7 +105,7 @@ const std::string PACKET_DATA_PATH = "./packets/"; // This directory must exist 
 #define TC_LOW -1000
 #define TC_MAX 10000
 
-#define ACC_LOW 0
+#define ACC_LOW -15
 #define ACC_HIGH 15
 
 ////////////////////////////////////
@@ -126,7 +126,7 @@ const std::string PACKET_DATA_PATH = "./packets/"; // This directory must exist 
 //////////////////////////////
 #define DEBUG // comment/uncomment to enable/disable debugging logs
 #ifdef DEBUG
-// #define PRINT_DATA
+#define PRINT_DATA
 //#define PACKET_P
 #define VALIDITY_P
 // #define DEBUG_P
