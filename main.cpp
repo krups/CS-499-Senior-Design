@@ -244,7 +244,7 @@ void *IOThread(void *arguments)
                 if (stoi(code) == PACKET_REQUEST)
                 {
                     char localBuffer[PACKET_SIZE];
-                    memset(localBuffer, '\0', PACKET_SIZE)
+                    memset(localBuffer, '\0', PACKET_SIZE);
 
                     sem_wait(&packetSem);
 #ifdef DEBUG_P
