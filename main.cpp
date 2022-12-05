@@ -243,6 +243,9 @@ void *IOThread(void *arguments)
             {
                 if (stoi(code) == PACKET_REQUEST)
                 {
+                    char localBuffer[PACKET_SIZE];
+                    memset(localBuffer, '\0', PACKET_SIZE)
+
                     sem_wait(&packetSem);
 #ifdef DEBUG_P
                     printf("PACKET REQUEST RECEIVED:\n");
@@ -252,6 +255,9 @@ void *IOThread(void *arguments)
 #endif
                     serialPuts(fd, packetBuffer);
                     dataUsed = true;
+
+                    memcpy(localBuffer, packetBuffer, PACKET_SIZE);
+
                     sem_post(&packetSem);
 
                     // Save sent packet
@@ -269,7 +275,7 @@ void *IOThread(void *arguments)
                     {
                         sem_wait(&packetSem);
                         // Writes 1 packet of size PACKET_SIZE from packetBuffer to packetDataFile
-                        packetDataFile.write(packetBuffer, sizeof(packetBuffer));
+                        packetDataFile.write(localBuffer, PACKET_SIZE);
 #ifdef PACKET_P
                         printf("Saved packet %s to file!\n", packetBuffer);
 #endif
