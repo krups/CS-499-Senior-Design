@@ -310,7 +310,9 @@ void *IOThread(void *arguments)
                     }
                     catch (std::string e)
                     {
+#ifdef DATA_P
                         printf("%s\n", e.c_str());
+#endif
                     }
                 } // end else
             }     // end try

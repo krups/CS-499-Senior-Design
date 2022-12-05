@@ -71,15 +71,17 @@ Data::Data(char *line, SensorMap *sensors)
         double value = std::stod(tokens[i]);
 
         if (params->offset != 0)
-            value += (double) params->offset;
+            value += (double)params->offset;
 
         if (params->multiplier != 1)
-            value *= (double) params->multiplier;
+            value *= (double)params->multiplier;
 
-        data.push_back((int) value);
+        data.push_back((int)value);
     }
 
     bits_per_sample = params->numBitsPerSample;
+
+    // rounds up number of bits to the nearest byte for saving to sensor data to file
     num_bytes = (params->numBitsPerDataPoint + 7) / 8;
 }
 
@@ -98,6 +100,13 @@ Data::Data(const Data &x)
     data = x.data;
 }
 
+/**
+ * @brief Determines if string s only contains numerical values
+ *
+ * @param s
+ * @return true
+ * @return false
+ */
 bool Data::is_number(const std::string &s)
 {
     return (strspn(s.c_str(), "-.0123456789") == s.size());
@@ -123,6 +132,11 @@ int Data::getNumVals()
     return num_vals;
 }
 
+/**
+ * @brief Get the Num Bytes object
+ *
+ * @return int
+ */
 int Data::getNumBytes()
 {
     return num_bytes;
@@ -148,25 +162,49 @@ std::vector<int> Data::getData()
     return data;
 }
 
+/**
+ * @brief Fills buffer, buf, with minimum binary
+ *        value representation of values
+ *
+ * @param buf
+ */
 void Data::createBitBuffer(char *buf)
 {
     int bufBitPos = 0;
     int id = type;
     int ts = time_stamp;
     std::vector<int> points = data;
-    // printf("%d\n", bufBitPos);
+
+#ifdef DATA_P
+    printf("%d\n", bufBitPos);
+#endif
+
+    // Copy sensor ID into buf
     copyBitsL2B((uint8_t *)&id, (sizeof(int) * 8) - SENSOR_ID_BITS, sizeof(int), (uint8_t *)buf, bufBitPos, SENSOR_ID_BITS);
     bufBitPos += SENSOR_ID_BITS;
-    // printf("%d\n", bufBitPos);
+
+#ifdef DATA_P
+    printf("%d\n", bufBitPos);
+#endif
+
+    // Copy timestamp into buf
     copyBitsL2B((uint8_t *)&ts, (sizeof(int) * 8) - SENSOR_TIMESTAMP_BITS, sizeof(int), (uint8_t *)buf, bufBitPos, SENSOR_TIMESTAMP_BITS);
     bufBitPos += SENSOR_TIMESTAMP_BITS;
-    // printf("%d\n", bufBitPos);
+
+#ifdef DATA_P
+    printf("%d\n", bufBitPos);
+#endif
+
+    // Copies values into buf
     for (int i = 0; i < num_vals; i++)
     {
         int point = points[i];
         copyBitsL2B((uint8_t *)&point, (sizeof(int) * 8) - bits_per_sample, sizeof(int), (uint8_t *)buf, bufBitPos, bits_per_sample);
         bufBitPos += bits_per_sample;
-        // printf("%d\n", bufBitPos);
+
+#ifdef DATA_P
+        printf("%d\n", bufBitPos);
+#endif
     }
 }
 
@@ -183,6 +221,13 @@ void Data::printData()
     }
 }
 
+/**
+ * @brief Overload << operator
+ *
+ * @param out ostream
+ * @param x Data object
+ * @return std::ostream&
+ */
 std::ostream &operator<<(std::ostream &out, const Data &x)
 {
     out << x.type << "," << x.time_stamp;
