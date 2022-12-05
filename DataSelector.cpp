@@ -608,6 +608,10 @@ void DataSelector::markUsed()
         // Increment the number of times that this data point has been used
         targetDataPoint->numIncludes++;
 
+#ifdef DATA_SEL_P
+        std::cout << "marked used sensor " << targetDataPoint->sensor_id << " index " << sensorDataIndex << " used " << targetDataPoint->numIncludes << " times" << std::endl;
+#endif
+
         // If the index of the removed point was greater than the next unused data point from this sensor
         if (sensorDataIndex >= nextUnusedDataPointIndex[targetDataPoint->sensor_id])
         {
@@ -621,6 +625,10 @@ void DataSelector::markUsed()
 
             // Update the next unused data point index for this sensor to be where this point used to be
             nextUnusedDataPointIndex[targetDataPoint->sensor_id] = sensorDataIndex;
+
+#ifdef DATA_SEL_P
+            std::cout << "removed sensor " << targetDataPoint->sensor_id << " index " << sensorDataIndex << std::endl;
+#endif
           } else {
             // Update the next unused data point index for this sensor to be immediately after this point
             nextUnusedDataPointIndex[targetDataPoint->sensor_id] = sensorDataIndex + 1;
@@ -637,6 +645,10 @@ void DataSelector::markUsed()
 
             // Subtract the next unused data point index to account for this point being removed
             nextUnusedDataPointIndex[targetDataPoint->sensor_id] -= 1;
+
+#ifdef DATA_SEL_P
+            std::cout << "removed sensor " << targetDataPoint->sensor_id << " index " << sensorDataIndex << std::endl;
+#endif
           }
         }
 
