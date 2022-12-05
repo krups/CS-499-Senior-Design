@@ -26,7 +26,6 @@ class DataSelector {
     std::unordered_map<unsigned int, unsigned int> sensorRelativeSpacing;
 
     std::vector<DataPoint*>* currentData;
-    std::vector<DataPoint*>* previousData;
 
     unsigned int nextDataPointID;
 

@@ -19,8 +19,7 @@
 char packetBuffer[PACKET_SIZE];  // Most recently created packet
 bool dataUsed = false;           // Whether the packet in the packet buffer has been sent
 
-sem_t dataUsedSem;  // Access to the variable of whether the data was used
-sem_t packetSem;    // Access to the packet buffer
+sem_t packetSem;    // Access to the packet buffer and dataUsed indicator
 sem_t dataFileSem;  // Access to files storing sensor data
 
 SensorMap sensors;  // Map of sensor ids and sensor configurations
@@ -99,9 +98,21 @@ void *PackagingThread(void *arguments)
         // Initialize newPacket to zeros
         memset(newPacket, '\0', PACKET_SIZE);
 
+        // If the previous packet was used, mark data as sent
+        // Access packet buffer
+        sem_wait(&packetSem);
+        if (dataUsed)
+        {
+            dataSelector.markUsed();
+            dataUsed = false;
+        }
+        sem_post(&packetSem);
+
         // Select data
         sem_wait(&dataFileSem);
+
         dataList = *dataSelector.selectData();
+
         sem_post(&dataFileSem);
 
         // If there was data, create a new packet
@@ -159,14 +170,6 @@ void *PackagingThread(void *arguments)
         // Access packet buffer
         sem_wait(&packetSem);
 
-        // If the previous packet was used, mark data as sent
-        sem_wait(&dataUsedSem);
-        if (dataUsed)
-        {
-            dataSelector.markUsed();
-            dataUsed = false;
-        }
-        sem_post(&dataUsedSem);
         // If there was new data, write new packet
         if (!dataList.empty())
         {
@@ -247,10 +250,8 @@ void *IOThread(void *arguments)
                     printf("Sent packet: %s\n", packetBuffer);
 #endif
                     serialPuts(fd, packetBuffer);
-                    sem_post(&packetSem);
-                    sem_wait(&dataUsedSem);
                     dataUsed = true;
-                    sem_post(&dataUsedSem);
+                    sem_post(&packetSem);
 
                     // Save sent packet
                     // std::ofstream packetDataFile;
@@ -337,10 +338,6 @@ int main()
     sensors.addSensor(SPEC_ID, SPEC_PRIORITY, SPEC_NUM_SAMPLES_PER_DATA_POINT, SPEC_NUM_BITS_PER_SAMPLE, SPEC_OFFSET, SPEC_MULT);
 
     // Start semaphores
-    if (sem_init(&dataUsedSem, 0, 1) != 0)
-    {
-        printf("ERROR: Semaphore failed\n");
-    }
     if (sem_init(&packetSem, 0, 1) != 0)
     {
         printf("ERROR: Semaphore failed\n");

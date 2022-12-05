@@ -41,11 +41,6 @@ DataSelector::~DataSelector()
   {
     delete currentData;
   }
-
-  if (previousData != nullptr)
-  {
-    delete previousData;
-  }
 }
 
 // Used to update the values stored in dataPoints
@@ -310,13 +305,6 @@ std::vector<DataPoint *> *DataSelector::selectData()
   // First, update the vectors of data points that are tracked in memory and used for data selection
   updateDataPoints();
 
-  // Track the previously generated vector of data points
-  if (previousData != nullptr)
-  {
-    delete previousData;
-  }
-  previousData = currentData;
-
   // Make an unordered map of ints to track how many data points go to each sensor
   std::unordered_map<int, unsigned int> pointsPerSensor;
   for (auto [sensorId, sensorSettings] : sensors->sensorMap)
@@ -503,6 +491,11 @@ std::vector<DataPoint *> *DataSelector::selectData()
   {
     delete tempDataPointList[sensorId];
   }
+  
+  // Release memory for old list of data points
+  if (currentData != nullptr) {
+    delete currentData;
+  }
 
   // Track the currently generated list of data points
   currentData = dataPointList;
@@ -525,15 +518,15 @@ std::vector<DataPoint *> *DataSelector::selectData()
 void DataSelector::markUsed()
 {
   // Only mark data if there is any data to mark
-  if (previousData == nullptr) {
+  if (currentData == nullptr) {
     return;
   }
 
   // For each data point in the previous list of data points
-  unsigned int previousDataSize = previousData->size();
-  for (unsigned int previousDataIndex = 0; previousDataIndex < previousDataSize; previousDataIndex++)
+  unsigned int currentDataSize = currentData->size();
+  for (unsigned int currentDataIndex = 0; currentDataIndex < currentDataSize; currentDataIndex++)
   {
-    DataPoint *targetDataPoint = (*previousData)[previousDataIndex];
+    DataPoint *targetDataPoint = (*currentData)[currentDataIndex];
 
     // Loop through the vector of data points for the sensor that this data point is associated with to find the index of that data point
     unsigned int sensorDataSize = dataPoints[targetDataPoint->sensor_id]->size();
