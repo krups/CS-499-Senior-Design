@@ -135,7 +135,6 @@ void DataSelector::updateDataPoints()
 
 unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsigned int numData, std::vector<DataPoint *> *tempDataPointList, unsigned int startInclusive, unsigned int endExclusive, double offset)
 {
-// Make sure that it doesn't try to select more data points than exist
 #ifdef DATA_SEL_P
   printf("SELECTING DATA POINTS GRADIENT\n");
   printf("------------------------------\n");
@@ -320,7 +319,7 @@ unsigned int DataSelector::selectDataPointsIndex(unsigned int sensorId, unsigned
 
   unsigned int numPointsSelected = 0;
 
-  // Iterate through the new data points using the calculated increment and add them to the temporary vector
+  // Iterate through the data points using the calculated increment and add them to the temporary vector
   double dataPointIndex = startInclusive + (dataSpacing * offset);
   for (unsigned int i = 0; i < numData; i++)
   {
