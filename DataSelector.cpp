@@ -560,7 +560,7 @@ void DataSelector::markUsed()
           if (targetDataPoint->numIncludes > POINT_INCLUDE_LIMIT)
           {
             // Use the index that was counted while searching to remove the item from the vector of data points for that sensor
-            std::vector<DataPoint>::iterator sensorDataIterator = dataPoints[targetDataPoint->sensor_id]->begin() + sensorDataIndex;
+            std::vector<DataPoint>::iterator sensorDataIterator = dataPoints[targetDataPoint->sensor_id]->begin();
             std::advance(sensorDataIterator, sensorDataIndex);
             dataPoints[targetDataPoint->sensor_id]->erase(sensorDataIterator);
 
