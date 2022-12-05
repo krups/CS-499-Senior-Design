@@ -20,8 +20,8 @@
 
 
 // File Paths 
-const std::string SENSOR_DATA_PATH = "./data/"; // This directory must exist before running the program
-const std::string PACKET_DATA_PATH = "./packets/"; // This directory must exist before running the program
+const std::string SENSOR_DATA_PATH = "./data/"; // This directory must exist before running the program, must end with /
+const std::string PACKET_DATA_PATH = "./packets/"; // This directory must exist before running the program, must end with /
 
 // Serial port which interfaces with Feather M4 Express
 #define SERIAL_FEATHER "/dev/ttyS1"

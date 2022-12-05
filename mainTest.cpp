@@ -11,7 +11,7 @@
 
 char packetBuffer[PACKET_SIZE];
 sem_t packetSem;
-sem_t sensor1Sem;
+sem_t dataFileSem;
 
 
 void saveData(Data data)
@@ -89,14 +89,14 @@ void * PackagingThread (void * arguments) {
 
         // Read the sensor data file
         std::string data;
-        sem_wait(&sensor1Sem);
+        sem_wait(&dataFileSem);
         printf("THREAD 2: Reading data from file\n");
         std::ifstream sensorDataFile(path);
         if (sensorDataFile.is_open()) {
             getline(sensorDataFile, data);
             sensorDataFile.close();
         }
-        sem_post(&sensor1Sem);
+        sem_post(&dataFileSem);
 
         // Write first character to packet buffer
         sem_wait(&packetSem);
@@ -141,7 +141,7 @@ void * IOThread (void * arguments) {
             path += command;
 
             // Write to the sensor data file
-            sem_wait(&sensor1Sem);
+            sem_wait(&dataFileSem);
             printf("THREAD 1: Writing data to file\n");
             sensorDataFile.open(path, std::ios_base::app);
             if (!sensorDataFile.fail()) {
@@ -155,7 +155,7 @@ void * IOThread (void * arguments) {
                     saveData(datum);
                 sensorDataFile.close();
             }
-            sem_post(&sensor1Sem);    
+            sem_post(&dataFileSem);    
         }
     }
     return NULL;
@@ -169,7 +169,7 @@ int main() {
        printf("ERROR: Semaphore failed\n");
     }
 
-    if ( sem_init(&sensor1Sem, 0, 1) != 0 ) {
+    if ( sem_init(&dataFileSem, 0, 1) != 0 ) {
        printf("ERROR: Semaphore failed\n");
     }
 

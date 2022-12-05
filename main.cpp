@@ -16,14 +16,14 @@
 #include "DataSelector.h"
 #include "copyBits.h"
 
-char packetBuffer[PACKET_SIZE];
-bool dataUsed = false;
+char packetBuffer[PACKET_SIZE];  // Most recently created packet
+bool dataUsed = false;           // Whether the packet in the packet buffer has been sent
 
-sem_t dataUsedSem;
-sem_t packetSem;
-sem_t sensor1Sem;
+sem_t dataUsedSem;  // Access to the variable of whether the data was used
+sem_t packetSem;    // Access to the packet buffer
+sem_t dataFileSem;  // Access to files storing sensor data
 
-SensorMap sensors;
+SensorMap sensors;  // Map of sensor ids and sensor configurations
 
 void saveData(Data data, char *buf)
 {
@@ -99,10 +99,10 @@ void *PackagingThread(void *arguments)
         // Initialize newPacket to zeros
         memset(newPacket, '\0', PACKET_SIZE);
 
-        sem_wait(&sensor1Sem);
         // Select data
+        sem_wait(&dataFileSem);
         dataList = *dataSelector.selectData();
-        sem_post(&sensor1Sem);
+        sem_post(&dataFileSem);
 
         // If there was data, create a new packet
         if (!dataList.empty())
@@ -111,13 +111,13 @@ void *PackagingThread(void *arguments)
             unsigned int startingPos = 0;
             for (DataPoint *dataInfo : dataList)
             {
-                #ifdef DEBUG_P
+#ifdef DEBUG_P
                 std::cout << "list size: " << dataList.size() << std::endl;
 
-                std::cout << "debug: " << dataInfo->sensor_id << " " << dataInfo->fileIndex << std::endl;
+                std::cout << "sensor id and file index: " << dataInfo->sensor_id << " " << dataInfo->fileIndex << std::endl;
 #endif
                 // Open the sensor file
-                sem_wait(&sensor1Sem);
+                sem_wait(&dataFileSem);
                 std::string path = SENSOR_DATA_PATH;
                 path += std::to_string(dataInfo->sensor_id);
                 sensorFile.open(path, std::ios_base::binary);
@@ -129,7 +129,7 @@ void *PackagingThread(void *arguments)
 
                     // Find the number of bytes for that type
                     unsigned int numBits = sensors.sensorMap[dataInfo->sensor_id]->numBitsPerDataPoint;
-                    unsigned int numBytes = (numBits + 7) / 8;
+                    unsigned int numBytes = (numBits + 7) / 8;  // divide by 8 and round up
 
                     // Read the bytes
                     buffer = (uint8_t *)malloc(numBytes);
@@ -152,7 +152,7 @@ void *PackagingThread(void *arguments)
                     std::cout << "ERROR: could not open " << path << std::endl;
                 }
 
-                sem_post(&sensor1Sem);
+                sem_post(&dataFileSem);
             }
         }
 
@@ -293,12 +293,12 @@ void *IOThread(void *arguments)
                         memset(&temp_buf, 0, size);
                         datum.createBitBuffer(temp_buf);
 
-                        sem_wait(&sensor1Sem);
+                        sem_wait(&dataFileSem);
 
                         // Save data after checking validity
                         if (checkValid(datum))
                             saveData(datum, temp_buf);
-                        sem_post(&sensor1Sem);
+                        sem_post(&dataFileSem);
                     }
                     catch (std::string e)
                     {
@@ -346,7 +346,7 @@ int main()
         printf("ERROR: Semaphore failed\n");
     }
 
-    if (sem_init(&sensor1Sem, 0, 1) != 0)
+    if (sem_init(&dataFileSem, 0, 1) != 0)
     {
         printf("ERROR: Semaphore failed\n");
     }
