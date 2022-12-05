@@ -6,8 +6,12 @@
 
 #include "Sensors.h"
 #include "copyBits.h"
+
 /**
  * @brief Class for sensor data
+ *        Used for data processing 
+ *        saving raw sensor data to 
+ *        file 
  *
  */
 class Data
