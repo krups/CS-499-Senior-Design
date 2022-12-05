@@ -129,6 +129,7 @@ const std::string PACKET_DATA_PATH = "./packets/"; // This directory must exist 
 #define VALIDITY_P
 // #define DEBUG_P
 //#define DATA_SEL_P // debug statements in DataSelector.cpp
+#define PACKET_DELAY
 #endif
 
 #endif

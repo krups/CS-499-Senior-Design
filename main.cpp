@@ -95,18 +95,22 @@ void *PackagingThread(void *arguments)
     // Constantly create new packets
     while (true)
     {
+#ifdef PACKET_DELAY
+        delay(500);
+#endif
         // Initialize newPacket to zeros
         memset(newPacket, '\0', PACKET_SIZE);
 
-        // If the previous packet was used, mark data as sent
+        
         // Access packet buffer
         sem_wait(&packetSem);
+
+        // If the previous packet was used, mark data as sent
         if (dataUsed)
         {
             dataSelector.markUsed();
             dataUsed = false;
         }
-        sem_post(&packetSem);
 
         // Select data
         sem_wait(&dataFileSem);
@@ -166,9 +170,6 @@ void *PackagingThread(void *arguments)
                 sem_post(&dataFileSem);
             }
         }
-
-        // Access packet buffer
-        sem_wait(&packetSem);
 
         // If there was new data, write new packet
         if (!dataList.empty())
