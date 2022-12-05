@@ -18,6 +18,8 @@
 #define SENSOR_TIMESTAMP_BITS 12
 #define SENSOR_METADATA_BITS (SENSOR_ID_BITS + SENSOR_TIMESTAMP_BITS)
 
+// Delay for creating packets in seconds 
+#define PACKET_DELAY 0
 
 // File Paths 
 const std::string SENSOR_DATA_PATH = "./data/"; // This directory must exist before running the program, must end with /
@@ -129,7 +131,6 @@ const std::string PACKET_DATA_PATH = "./packets/"; // This directory must exist 
 #define VALIDITY_P
 // #define DEBUG_P
 //#define DATA_SEL_P // debug statements in DataSelector.cpp
-#define PACKET_DELAY
 #endif
 
 #endif

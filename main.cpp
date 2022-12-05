@@ -16,13 +16,13 @@
 #include "DataSelector.h"
 #include "copyBits.h"
 
-char packetBuffer[PACKET_SIZE];  // Most recently created packet
-bool dataUsed = false;           // Whether the packet in the packet buffer has been sent
+char packetBuffer[PACKET_SIZE]; // Most recently created packet
+bool dataUsed = false;          // Whether the packet in the packet buffer has been sent
 
-sem_t packetSem;    // Access to the packet buffer and dataUsed indicator
-sem_t dataFileSem;  // Access to files storing sensor data
+sem_t packetSem;   // Access to the packet buffer and dataUsed indicator
+sem_t dataFileSem; // Access to files storing sensor data
 
-SensorMap sensors;  // Map of sensor ids and sensor configurations
+SensorMap sensors; // Map of sensor ids and sensor configurations
 
 void saveData(Data data, char *buf)
 {
@@ -64,7 +64,7 @@ bool checkValid(Data data)
         }
 
         // TC Validity Check
-        if (data.getType() == TC_ID && (points[i] < (int) ((TC_LOW + TC_OFFSET) * TC_MULT) || points[i] > (int) ((TC_MAX + TC_OFFSET) * TC_MULT)))
+        if (data.getType() == TC_ID && (points[i] < (int)((TC_LOW + TC_OFFSET) * TC_MULT) || points[i] > (int)((TC_MAX + TC_OFFSET) * TC_MULT)))
         {
 #ifdef VALIDITY_P
             printf("Error %u: TC validity check failed with '%d = %d'!\n", data.getTimeStamp(), i, points[i]);
@@ -73,7 +73,7 @@ bool checkValid(Data data)
         }
 
         // ACC Validity Check
-        if (data.getType() == ACC_ID && (points[i] < (int) ((ACC_LOW + ACC_OFFSET) * ACC_MULT) || points[i] > (int) ((ACC_HIGH + ACC_OFFSET) * ACC_MULT)))
+        if (data.getType() == ACC_ID && (points[i] < (int)((ACC_LOW + ACC_OFFSET) * ACC_MULT) || points[i] > (int)((ACC_HIGH + ACC_OFFSET) * ACC_MULT)))
         {
 #ifdef VALIDITY_P
             printf("Error %u: ACC validity check failed with '%d = %d'!\n", data.getTimeStamp(), i, points[i]);
@@ -95,13 +95,13 @@ void *PackagingThread(void *arguments)
     // Constantly create new packets
     while (true)
     {
-#ifdef PACKET_DELAY
-        delay(500);
-#endif
+        if (PACKET_DELAY)
+        {
+            delay(PACKET_DELAY * 1000);
+        }
         // Initialize newPacket to zeros
         memset(newPacket, '\0', PACKET_SIZE);
 
-        
         // Access packet buffer
         sem_wait(&packetSem);
 
@@ -144,7 +144,7 @@ void *PackagingThread(void *arguments)
 
                     // Find the number of bytes for that type
                     unsigned int numBits = sensors.sensorMap[dataInfo->sensor_id]->numBitsPerDataPoint;
-                    unsigned int numBytes = (numBits + 7) / 8;  // divide by 8 and round up
+                    unsigned int numBytes = (numBits + 7) / 8; // divide by 8 and round up
 
                     // Read the bytes
                     buffer = (uint8_t *)malloc(numBytes);
