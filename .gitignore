@@ -1,2 +1,5 @@
-.vscode/arduino.json
-.vscode/c_cpp_properties.json
+.vscode
+decode
+data/*
+packets/*
+testing/CS-499-Senior-Design.ino

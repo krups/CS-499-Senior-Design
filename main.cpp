@@ -14,15 +14,17 @@
 #include "data.h"
 #include "serial_headers.h"
 #include "DataSelector.h"
+#include "copyBits.h"
 
-char packetBuffer[PACKET_SIZE];
-bool dataUsed = false;
-sem_t packetSem;
-sem_t sensor1Sem;
+char packetBuffer[PACKET_SIZE]; // Most recently created packet
+bool dataUsed = false;          // Whether the packet in the packet buffer has been sent
 
-SensorList sensors;
+sem_t packetSem;   // Access to the packet buffer and dataUsed indicator
+sem_t dataFileSem; // Access to files storing sensor data
 
-void saveData(Data data)
+SensorMap sensors; // Map of sensor ids and sensor configurations
+
+void saveData(Data data, char *buf)
 {
 #ifdef PRINT_DATA
     data.printData();
@@ -30,11 +32,11 @@ void saveData(Data data)
     std::ofstream sensorDataFile;
     std::string path = SENSOR_DATA_PATH;
     path += std::to_string(data.getType());
-
-    sensorDataFile.open(path, std::ios_base::app);
+    sensorDataFile.open(path, std::ios::app | std::ios::binary);
     if (!sensorDataFile.fail())
     {
-        sensorDataFile << data;
+        sensorDataFile.write(buf, data.getNumBytes());
+        std::cout << "Saving line: " << data << " to file" << std::endl;
 #ifdef PRINT_DATA
         printf("Saved %d, %u to file!\n", data.getType(), data.getTimeStamp());
 #endif
@@ -48,7 +50,7 @@ void saveData(Data data)
 
 bool checkValid(Data data)
 {
-    std::vector<u_int16_t> points = data.getData();
+    std::vector<int> points = data.getData();
     for (int i = 0; i < data.getNumVals(); i++)
     { // Add checks to correspond with validity parameters in config.h
 
@@ -62,19 +64,19 @@ bool checkValid(Data data)
         }
 
         // TC Validity Check
-        if (data.getType() == TC_SERIAL && (points[i] < TC_LOW || points[i] > TC_MAX))
+        if (data.getType() == TC_ID && (points[i] < (int)((TC_LOW + TC_OFFSET) * TC_MULT) || points[i] > (int)((TC_MAX + TC_OFFSET) * TC_MULT)))
         {
 #ifdef VALIDITY_P
-            printf("Error %u: TC validity check failed with '%d = %u'!\n", data.getTimeStamp(), i, points[i]);
+            printf("Error %u: TC validity check failed with '%d = %d'!\n", data.getTimeStamp(), i, points[i]);
 #endif
             return false;
         }
 
         // ACC Validity Check
-        if (data.getType() == ACC_SERIAL && (points[i] < ACC_LOW || points[i] > ACC_HIGH))
+        if (data.getType() == ACC_ID && (points[i] < (int)((ACC_LOW + ACC_OFFSET) * ACC_MULT) || points[i] > (int)((ACC_HIGH + ACC_OFFSET) * ACC_MULT)))
         {
 #ifdef VALIDITY_P
-            printf("Error %u: ACC validity check failed with '%d = %u'!\n", data.getTimeStamp(), i, points[i]);
+            printf("Error %u: ACC validity check failed with '%d = %d'!\n", data.getTimeStamp(), i, points[i]);
 #endif
             return false;
         }
@@ -87,56 +89,102 @@ void *PackagingThread(void *arguments)
     DataSelector dataSelector(&sensors);
     std::vector<DataPoint *> dataList;
     std::ifstream sensorFile;
-    std::string data;
+    uint8_t *buffer;
+    uint8_t newPacket[PACKET_SIZE];
 
+    // Constantly create new packets
     while (true)
     {
-        std::string packet;
-
-        // Select data
-        dataList = *dataSelector.selectData();
-
-        // Read each data point from sensor file
-        for (DataPoint *dataInfo : dataList)
+        if (PACKET_DELAY)
         {
-            sem_wait(&sensor1Sem);
-
-            std::string path = SENSOR_DATA_PATH;
-            path += std::to_string(dataInfo->sensor_id);
-            sensorFile.open(path, std::ios_base::binary);
-
-            if (sensorFile.is_open())
-            {
-                sensorFile.seekg(dataInfo->fileIndex);
-                getline(sensorFile, data);
-                packet += data;
-                sensorFile.close();
-            }
-            else
-            {
-                std::cout << "ERROR: could not open " << path << std::endl;
-            }
-
-            sem_post(&sensor1Sem);
+            delay(PACKET_DELAY * 1000);
         }
+        // Initialize newPacket to zeros
+        memset(newPacket, '\0', PACKET_SIZE);
 
+        // Access packet buffer
         sem_wait(&packetSem);
 
-        // Check if previous packet was used
+        // If the previous packet was used, mark data as sent
         if (dataUsed)
         {
-            dataSelector.markUsed(); // does this take parameters?
+            dataSelector.markUsed();
             dataUsed = false;
         }
 
-        // Put the new packet in the buffer
-        strncpy(packetBuffer, packet.c_str(), PACKET_SIZE);
-#ifdef PACKET_P
+        // Select data
+        sem_wait(&dataFileSem);
+
+        dataList = *dataSelector.selectData();
+
+        sem_post(&dataFileSem);
+
+        // If there was data, create a new packet
+        if (!dataList.empty())
+        {
+            // Read each data point from sensor file
+            unsigned int startingPos = 0;
+            for (DataPoint *dataInfo : dataList)
+            {
+#ifdef DEBUG_P
+                std::cout << "list size: " << dataList.size() << std::endl;
+
+                std::cout << "sensor id and file index: " << dataInfo->sensor_id << " " << dataInfo->fileIndex << std::endl;
+#endif
+                // Open the sensor file
+                sem_wait(&dataFileSem);
+                std::string path = SENSOR_DATA_PATH;
+                path += std::to_string(dataInfo->sensor_id);
+                sensorFile.open(path, std::ios_base::binary);
+
+                if (sensorFile.is_open())
+                {
+                    // Go to the line
+                    sensorFile.seekg(dataInfo->fileIndex);
+
+                    // Find the number of bytes for that type
+                    unsigned int numBits = sensors.sensorMap[dataInfo->sensor_id]->numBitsPerDataPoint;
+                    unsigned int numBytes = (numBits + 7) / 8; // divide by 8 and round up
+
+                    // Read the bytes
+                    buffer = (uint8_t *)malloc(numBytes);
+                    sensorFile.read((char *)buffer, numBytes);
+                    if (!sensorFile)
+                        std::cout << "ERROR: only " << sensorFile.gcount() << " bytes could be read, " << numBytes << " expected\n";
+                    else
+                    {
+                        // Add to the packet
+                        copyBitsB(buffer, 0, newPacket, startingPos, numBits);
+                        startingPos += numBits;
+                    }
+
+                    // Clean up
+                    sensorFile.close();
+                    free(buffer);
+                }
+                else
+                {
+                    std::cout << "ERROR: could not open " << path << std::endl;
+                }
+
+                sem_post(&dataFileSem);
+            }
+        }
+
+        // If there was new data, write new packet
+        if (!dataList.empty())
+        {
+            memcpy(packetBuffer, newPacket, PACKET_SIZE);
+        }
+
+#ifdef PACKET_P // Print the packet for debugging
         printf("Generated packet: %s\n", packetBuffer);
 #endif
+        // Release packet buffer
         sem_post(&packetSem);
     } // end while(true)
 
+    free(newPacket);
     return NULL;
 } // end PackagingThread
 
@@ -156,7 +204,7 @@ void *IOThread(void *arguments)
         exit(1);
     }
     printf("wiringPi set up!\n");
-    printf("Listening for serial!\n");
+    printf("Listening for sensor data!\n");
 
     // Variables for reading in data
     char letter;
@@ -180,64 +228,99 @@ void *IOThread(void *arguments)
             // Get command/sensor id
             while (line[x] != ',' && line[x] != '\n')
             {
-                code += line[x];
-                x++;
+                if (line[x] != '\n' || line[x] != '\r')
+                {
+                    code += line[x];
+                    x++;
+                }
             }
+#ifdef DEBUG_P
             printf("CODE: %s\n", code.c_str());
             printf("CODE to INT: %d\n", stoi(code));
-
+#endif
             // Return most recent packet if command
-            if (stoi(code) == PACKET_REQUEST)
+            try
             {
-                sem_wait(&packetSem);
-                printf("PACKET REQUEST RECEIVED:\n");
-                printf("Generated packet: %s\n", packetBuffer);
-                serialPuts(fd, packetBuffer);
-                sem_post(&packetSem);
+                if (stoi(code) == PACKET_REQUEST)
+                {
+                    char localBuffer[PACKET_SIZE];
+                    memset(localBuffer, '\0', PACKET_SIZE);
 
-		// Save sent packet
-		std::ofstream packetDataFile;
-		std::string path = PACKET_DATA_PATH;
-		path += packetFileName;
+                    sem_wait(&packetSem);
+#ifdef DEBUG_P
+                    printf("PACKET REQUEST RECEIVED:\n");
+#endif
+#ifdef PACKET_P
+                    printf("Sent packet: %s\n", packetBuffer);
+#endif
+                    serialPuts(fd, packetBuffer);
+                    dataUsed = true;
 
-		packetDataFile.open(path, std::ios_base::app);
-		if (!packetDataFile.fail())
-		{
-			sem_wait(&packetSem);
-			// Writes 1 packet of size PACKET_SIZE from packetBuffer to packetDataFile
-			fwrite(packetBuffer, PACKET_SIZE, 1, packetDataFile);
-#ifdef PRINT_DATA
-			printf("Saved packet %s to file!\n", packetBuffer);
+                    memcpy(localBuffer, packetBuffer, PACKET_SIZE);
+
+                    sem_post(&packetSem);
+
+                    // Save sent packet
+                    // std::ofstream packetDataFile;
+                    std::ofstream packetDataFile;
+                    std::string path = PACKET_DATA_PATH;
+                    path += std::to_string(packetFileName);
+
+                    packetDataFile.open(path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
+                    if (packetDataFile.fail())
+                    {
+                        printf("ERROR OPENING PACKET DATA FILE: %s\n", path.c_str());
+                    }
+                    else
+                    {
+                        sem_wait(&packetSem);
+                        // Writes 1 packet of size PACKET_SIZE from packetBuffer to packetDataFile
+                        packetDataFile.write(localBuffer, PACKET_SIZE);
+#ifdef PACKET_P
+                        printf("Saved packet %s to file!\n", packetBuffer);
 #endif
-			sem_post(&packetSem);
-			packetFileName++;
-		}
-		else
-		{
+                        sem_post(&packetSem);
+                        packetFileName++;
+                        packetDataFile.close();
+                    }
+                }
+                // Otherwise, save data
+                else
+                {
+
 #ifdef PRINT_DATA
-			printf("Open: %s failed!\n", path.c_str());
+                    printf("%s\n", line);
 #endif
-		}
-    		packetDataFile.close();
+
+                    try
+                    {
+                        // Write to the sensor data file
+                        Data datum(line, &sensors);
+                        int size = datum.getNumBytes();
+                        char temp_buf[size];
+                        memset(&temp_buf, 0, size);
+                        datum.createBitBuffer(temp_buf);
+
+                        sem_wait(&dataFileSem);
+
+                        // Save data after checking validity
+                        if (checkValid(datum))
+                            saveData(datum, temp_buf);
+                        sem_post(&dataFileSem);
+                    }
+                    catch (std::string e)
+                    {
+                        printf("%s\n", e.c_str());
+                    }
+                } // end else
+            }     // end try
+            catch (const std::exception &e)
+            {
+#ifdef DEBUG_P
+                printf("Invalid code received\n");
+#endif
             }
-            // Otherwise, save data
-            else
-            {
 
-#ifdef PRINT_DATA
-                printf("%s\n", line);
-#endif
-
-                // Write to the sensor data file
-                Data datum(line);
-                sem_wait(&sensor1Sem);
-
-                // Save data after checking validity
-                if (checkValid(datum))
-                    saveData(datum);
-
-                sem_post(&sensor1Sem);
-            } // end else
             // Reset variables
             pos = 0;
             code = "";
@@ -250,11 +333,16 @@ void *IOThread(void *arguments)
 
 int main()
 {
-    // Active Sensors
-    // Entries should be formatted: sensor_id, sensor_priority, num_bytes
-    sensors.addSensor(THERMOCOUPLE, 1, 5);
-    sensors.addSensor(SPECTROMETER, 1, 6);
-    sensors.addSensor(ACCELEROMETER, 1, 3);
+    // Initialize packet buffer to zeros
+    memset(packetBuffer, '\0', PACKET_SIZE);
+
+    sensors.addSensor(TC_ID, TC_PRIORITY, TC_NUM_SAMPLES_PER_DATA_POINT, TC_NUM_BITS_PER_SAMPLE, TC_OFFSET, TC_MULT);
+    sensors.addSensor(IMU_ID, IMU_PRIORITY, IMU_NUM_SAMPLES_PER_DATA_POINT, IMU_NUM_BITS_PER_SAMPLE, IMU_OFFSET, IMU_MULT);
+    sensors.addSensor(GPS_ID, GPS_PRIORITY, GPS_NUM_SAMPLES_PER_DATA_POINT, GPS_NUM_BITS_PER_SAMPLE, GPS_OFFSET, GPS_MULT);
+    sensors.addSensor(RMC_ID, RMC_PRIORITY, RMC_NUM_SAMPLES_PER_DATA_POINT, RMC_NUM_BITS_PER_SAMPLE, RMC_OFFSET, RMC_MULT);
+    sensors.addSensor(ACC_ID, ACC_PRIORITY, ACC_NUM_SAMPLES_PER_DATA_POINT, ACC_NUM_BITS_PER_SAMPLE, ACC_OFFSET, ACC_MULT);
+    sensors.addSensor(PRES_ID, PRES_PRIORITY, PRES_NUM_SAMPLES_PER_DATA_POINT, PRES_NUM_BITS_PER_SAMPLE, PRES_OFFSET, PRES_MULT);
+    sensors.addSensor(SPEC_ID, SPEC_PRIORITY, SPEC_NUM_SAMPLES_PER_DATA_POINT, SPEC_NUM_BITS_PER_SAMPLE, SPEC_OFFSET, SPEC_MULT);
 
     // Start semaphores
     if (sem_init(&packetSem, 0, 1) != 0)
@@ -262,7 +350,7 @@ int main()
         printf("ERROR: Semaphore failed\n");
     }
 
-    if (sem_init(&sensor1Sem, 0, 1) != 0)
+    if (sem_init(&dataFileSem, 0, 1) != 0)
     {
         printf("ERROR: Semaphore failed\n");
     }

@@ -6,17 +6,15 @@ int i = 0;
 
 void printTC()
 {
-    int n = 6;
+    int n = 4;
     int values[n];
     for (int j = 0; j < n; j++)
     {
-        values[j] = random() % 1000;
+        values[j] = random() % 1700;
     }
     Serial1.print(TC_SERIAL);
     Serial1.print(',');
     Serial1.print(i);
-    Serial1.print(',');
-    Serial1.print(n);
     for (int j = 0; j < n; j++)
     {
         Serial1.print(',');
@@ -31,13 +29,11 @@ void printACC()
     int values[n];
     for (int j = 0; j < n; j++)
     {
-        values[j] = (random() % 150);
+        values[j] = (random() % 15);
     }
     Serial1.print(ACC_SERIAL);
     Serial1.print(',');
     Serial1.print(i);
-    Serial1.print(',');
-    Serial1.print(n);
     for (int j = 0; j < n; j++)
     {
         Serial1.print(',');
@@ -56,13 +52,11 @@ void printIMU()
     }
     for (int j = 3; j < n; j++)
     {
-        values[j] = random() % 360;
+        values[j] = random() % 2000;
     }
     Serial1.print(IMU_SERIAL);
     Serial1.print(',');
     Serial1.print(i);
-    Serial1.print(',');
-    Serial1.print(n);
     for (int j = 0; j < n; j++)
     {
         Serial1.print(',');
@@ -95,11 +89,12 @@ void setup()
 
 void loop()
 {
-    led.setPixelColor(0, led.Color(0, 0, 0));
+    led.setPixelColor(0, led.Color(150, 0, 0));
     led.show();
-    if (!(i % 10))
-        Serial1.println(0x8);
-    else
+    buttonWait(5);
+    led.setPixelColor(0, led.Color(0, 0, 150));
+    led.show();
+    for (int p = 0; p < 200; p++)
     {
         int option = random() % 3;
         switch (option)
@@ -116,11 +111,12 @@ void loop()
         default:
             break;
         }
+        i++;
+        delay(random() % 100);
     }
-    i++;
-    buttonWait(5);
     led.setPixelColor(0, led.Color(0, 150, 0));
     led.show();
-
+    buttonWait(5);
+    Serial1.println(0x8);
     delay(300);
 }

@@ -3,26 +3,84 @@
 /**
  * @brief Construct a new Data:: Data object
  *        Based on format of incoming raw data:
- *        sensor type, time stamp, n number of sensors, value_1, ... , value_n
+ *        sensor type, time stamp, value_1, ... , value_n
  *
  * @param line Line from serial stream of raw data
  */
-Data::Data(char *line)
+Data::Data(char *line, SensorMap *sensors)
 {
+    // Tokenize line
     std::vector<char *> tokens;
     char *ptr = strtok(line, ",");
     while (ptr != NULL)
     {
+        // if \n or \r are found replace with null character
+        char *nl = strchr(ptr, '\n');
+        if (nl)
+        {
+            *nl = '\0';
+        }
+        nl = strchr(ptr, '\r');
+        if (nl)
+        {
+            *nl = '\0';
+        }
+
+        // add ptr to vector of tokens
         tokens.push_back(ptr);
-        ptr = strtok(NULL, " , ");
+        ptr = strtok(NULL, ",");
     }
+
+    // Extract sensor type and validate sensor parameters
     type = atoi(tokens[0]);
-    time_stamp = (u_int32_t)atoi(tokens[1]);
-    num_vals = atoi(tokens[2]);
-    for (int i = 3; i < num_vals + 3; i++)
+    if (!(sensors->sensorMap.count(type)))
     {
-        data.push_back((u_int16_t)atoi(tokens[i]));
+        std::string msg = "Error: Sensor id ";
+        msg.append(std::to_string(type));
+        msg.append(" not found!");
+        throw msg;
     }
+    SensorSettings *params = sensors->sensorMap[type];
+    if (tokens.size() != params->numSamplesPerDataPoint + 2)
+    {
+        std::string msg = "Error: Invalid number of sensor values\n";
+        msg.append("\tExpected: ");
+        msg.append(std::to_string(params->numSamplesPerDataPoint));
+        msg.append(" Detected: ");
+        msg.append(std::to_string(tokens.size() - 2));
+        msg.append("\n");
+        throw msg;
+    }
+
+    time_stamp = (u_int32_t)atoi(tokens[1]);
+    num_vals = params->numSamplesPerDataPoint;
+
+    for (int i = 2; i < num_vals + 2; i++)
+    {
+        // Check if all values are numbers
+        if (!is_number(tokens[i]))
+        {
+            std::string msg = "Error: value at ";
+            msg.append(std::to_string(time_stamp));
+            msg.append(" on sensor ID ");
+            msg.append(std::to_string(type));
+            msg.append(" improper format: ");
+            msg.append(tokens[i]);
+            throw msg;
+        }
+        double value = std::stod(tokens[i]);
+
+        if (params->offset != 0)
+            value += (double) params->offset;
+
+        if (params->multiplier != 1)
+            value *= (double) params->multiplier;
+
+        data.push_back((int) value);
+    }
+
+    bits_per_sample = params->numBitsPerSample;
+    num_bytes = (params->numBitsPerDataPoint + 7) / 8;
 }
 
 /**
@@ -35,7 +93,14 @@ Data::Data(const Data &x)
     type = x.type;
     num_vals = x.num_vals;
     time_stamp = x.time_stamp;
+    bits_per_sample = x.bits_per_sample;
+    num_bytes = x.num_bytes;
     data = x.data;
+}
+
+bool Data::is_number(const std::string &s)
+{
+    return (strspn(s.c_str(), "-.0123456789") == s.size());
 }
 
 /**
@@ -58,6 +123,11 @@ int Data::getNumVals()
     return num_vals;
 }
 
+int Data::getNumBytes()
+{
+    return num_bytes;
+}
+
 /**
  * @brief Get the Time Stamp object
  *
@@ -73,9 +143,31 @@ u_int32_t Data::getTimeStamp()
  *
  * @return u_int16_t*
  */
-std::vector<u_int16_t> Data::getData()
+std::vector<int> Data::getData()
 {
     return data;
+}
+
+void Data::createBitBuffer(char *buf)
+{
+    int bufBitPos = 0;
+    int id = type;
+    int ts = time_stamp;
+    std::vector<int> points = data;
+    // printf("%d\n", bufBitPos);
+    copyBitsL2B((uint8_t *)&id, (sizeof(int) * 8) - SENSOR_ID_BITS, sizeof(int), (uint8_t *)buf, bufBitPos, SENSOR_ID_BITS);
+    bufBitPos += SENSOR_ID_BITS;
+    // printf("%d\n", bufBitPos);
+    copyBitsL2B((uint8_t *)&ts, (sizeof(int) * 8) - SENSOR_TIMESTAMP_BITS, sizeof(int), (uint8_t *)buf, bufBitPos, SENSOR_TIMESTAMP_BITS);
+    bufBitPos += SENSOR_TIMESTAMP_BITS;
+    // printf("%d\n", bufBitPos);
+    for (int i = 0; i < num_vals; i++)
+    {
+        int point = points[i];
+        copyBitsL2B((uint8_t *)&point, (sizeof(int) * 8) - bits_per_sample, sizeof(int), (uint8_t *)buf, bufBitPos, bits_per_sample);
+        bufBitPos += bits_per_sample;
+        // printf("%d\n", bufBitPos);
+    }
 }
 
 /**
@@ -84,7 +176,7 @@ std::vector<u_int16_t> Data::getData()
  */
 void Data::printData()
 {
-    std::cout << "Printing data for " << type << ": " << time_stamp << std::endl;
+    std::cout << "Printing data for sensor:" << type << "at t = " << time_stamp << std::endl;
     for (int i = 0; i < num_vals; i++)
     {
         std::cout << "val_" << i << ": " << data[i] << std::endl;
@@ -93,10 +185,11 @@ void Data::printData()
 
 std::ostream &operator<<(std::ostream &out, const Data &x)
 {
-    out << x.type << "," << x.time_stamp << "," << x.num_vals << ",";
-    for (auto y : x.data) {
-        out << y << ",";
+    out << x.type << "," << x.time_stamp;
+    for (auto y : x.data)
+    {
+        out << "," << y;
     }
-    out << "\n";
+    // out << "\n";
     return out;
 }
