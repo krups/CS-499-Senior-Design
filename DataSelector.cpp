@@ -210,7 +210,7 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
         if ((*dataPoints[sensorId])[dataPointIndex].used == false)
         {
 #ifdef DATA_SEL_P
-          printf("sensor %d added point %d\n", sensorId, dataPointIndex);
+          printf("sensor %d added point %d fileIndex %d\n", sensorId, dataPointIndex, (*dataPoints[sensorId])[dataPointIndex].fileIndex);
 #endif
           // Pick this point and mark it so it can't be picked twice
           (*dataPoints[sensorId])[dataPointIndex].used = true;
@@ -233,7 +233,7 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
               if ((*dataPoints[sensorId])[retryDataPointIndexUp].used == false)
               {
 #ifdef DATA_SEL_P
-                printf("sensor %d added point %d retry up\n", sensorId, retryDataPointIndexUp);
+                printf("sensor %d added point %d retry up fileIndex %d\n", sensorId, retryDataPointIndexUp, (*dataPoints[sensorId])[retryDataPointIndexUp].fileIndex);
 #endif
                 // Pick it and mark it so it can't be picked twice
                 (*dataPoints[sensorId])[retryDataPointIndexUp].used = true;
@@ -253,7 +253,7 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
               if ((*dataPoints[sensorId])[retryDataPointIndexDown].used == false)
               {
 #ifdef DATA_SEL_P
-                printf("sensor %d added point %d retry down\n", sensorId, retryDataPointIndexDown);
+                printf("sensor %d added point %d retry down fileIndex %d\n", sensorId, retryDataPointIndexDown, (*dataPoints[sensorId])[retryDataPointIndexDown].fileIndex);
 #endif
                 (*dataPoints[sensorId])[retryDataPointIndexDown].used = true;
                 tempDataPointList->push_back(&(*dataPoints[sensorId])[retryDataPointIndexDown]);
@@ -324,7 +324,7 @@ unsigned int DataSelector::selectDataPointsIndex(unsigned int sensorId, unsigned
   for (unsigned int i = 0; i < numData; i++)
   {
 #ifdef DATA_SEL_P
-    printf("sensor %d added point\n", sensorId);
+    printf("sensor %d added point %d fileIndex %d\n", sensorId, (int)dataPointIndex, (*dataPoints[sensorId])[(int)dataPointIndex].fileIndex);
 #endif
     tempDataPointList->push_back(&(*dataPoints[sensorId])[(int)dataPointIndex]);
     numPointsSelected++;
