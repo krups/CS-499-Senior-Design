@@ -7,7 +7,13 @@ As the capsule enters the Earth’s atmosphere, data from the thermocouple and s
 To solve this issue, a code framework is needed that performs adaptive sampling such that only the most pertinent data is packaged and transmitted. Within the scope of a senior design, we would like the team to construct the sampling for data from the thermocouples and the spectrometer. A bonus task would be to keep the code generic such that efficient data reduction and packaging can be performed for an arbitrary set of input variables.
 
 # How the program works
+![88407785-F246-4D2D-9B8F-11695B1C94CA](https://user-images.githubusercontent.com/41971210/205755514-5db6eaef-b308-42f8-ba25-865613a06237.png)
 
+The Feather Controller sends data and commands over serial to this program, specifically the I/O thread. This data is processed by validating it, converting its representation, and saving it to storage.
+
+The packaging thread takes this saved data and selects data to be packaged. This data is then packaged into a packet and saved to a packet buffer.
+
+The I/O thread waits for a packet request and sends what is in the packet buffer when one is received. When the I/O thread sends a packet to the Feather Controller, it also saves a copy of the packet to storage.
 
 # How to compile
 Using the included makefile makes compiling very easy, just run the command `make kaps` or `make` to compile and run. To manually compile, run `g++ -o <executable name> *.cpp -g -Wall -lwiringPi -pthread -std=c++17`.
