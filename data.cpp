@@ -25,7 +25,10 @@ Data::Data(char *line, SensorMap *sensors)
         {
             *nl = '\0';
         }
-
+        if (*ptr == ' ')
+        {
+            ptr++;
+        }
         // add ptr to vector of tokens
         tokens.push_back(ptr);
         ptr = strtok(NULL, ",");
