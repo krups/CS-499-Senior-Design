@@ -6,6 +6,8 @@ DataSelector::DataSelector()
 {
   sensorPriorityLCM = 1;
   nextDataPointID = 0;
+
+  sensors = nullptr;
 }
 
 DataSelector::DataSelector(SensorMap *sensors)
@@ -340,6 +342,11 @@ unsigned int DataSelector::selectDataPointsIndex(unsigned int sensorId, unsigned
 // Called by the packet building thread to select data points to include in the nexxt packet
 std::vector<DataPoint *> *DataSelector::selectData()
 {
+  // Immediately return if the DataSelector class was not properly initialized
+  if (sensors == nullptr) {
+    return nullptr;
+  }
+
 #ifdef DATA_SEL_P
   printf("SELECTING DATA\n");
   printf("--------------\n");
