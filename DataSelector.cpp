@@ -108,7 +108,7 @@ void DataSelector::updateDataPoints()
           newDataPoint.numIncludes = 0;
           newDataPoint.fileIndex = fileIndex;
           newDataPoint.used = false;
-          newDataPoint.gradient = 1;
+          newDataPoint.gradient = 1; // This is currently a hard-code and should be updated to use data from the file when the gradient selection feature is finished (the gradient should likely be computed in the I/O thread and the gradient is simply included in the data file and read from the file here)
           newDataPoint.ID = nextDataPointID;
 
           // Update internal variables
