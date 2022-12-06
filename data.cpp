@@ -37,7 +37,7 @@ Data::Data(char *line, SensorMap *sensors)
     // Extract sensor type and validate sensor parameters
     type = atoi(tokens[0]);
     if (!(sensors->sensorMap.count(type)))
-    {
+    { // sensor id has not been added
         std::string msg = "Error: Sensor id ";
         msg.append(std::to_string(type));
         msg.append(" not found!");
@@ -45,7 +45,7 @@ Data::Data(char *line, SensorMap *sensors)
     }
     SensorSettings *params = sensors->sensorMap[type];
     if (tokens.size() != params->numSamplesPerDataPoint + 2)
-    {
+    { // number of sensors read does not match the configuration
         std::string msg = "Error: Invalid number of sensor values\n";
         msg.append("\tExpected: ");
         msg.append(std::to_string(params->numSamplesPerDataPoint));
@@ -73,9 +73,10 @@ Data::Data(char *line, SensorMap *sensors)
         }
         double value = std::stod(tokens[i]);
 
+        // allows for representation of negative values in custom representation
         if (params->offset != 0)
             value += (double)params->offset;
-
+        // multiplier for fixed precision floats
         if (params->multiplier != 1)
             value *= (double)params->multiplier;
 

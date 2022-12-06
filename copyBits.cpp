@@ -1,5 +1,14 @@
 #include "copyBits.h"
 
+/**
+ * @brief Copy bits from big endian src to big endian dst
+ * 
+ * @param src big endian
+ * @param srcStartBit 
+ * @param dst big endian
+ * @param dstStartBit 
+ * @param n number of bits to copy 
+ */
 void copyBitsB(uint8_t* src, unsigned int srcStartBit, uint8_t* dst, unsigned int dstStartBit, unsigned int n) {
     for (unsigned int i = 0; i < n; i++) {
         int srcPos = srcStartBit + i;
@@ -10,6 +19,17 @@ void copyBitsB(uint8_t* src, unsigned int srcStartBit, uint8_t* dst, unsigned in
     }
 }
 
+/**
+ * @brief Copy bits from little endian src to little endian dst
+ * 
+ * @param src little endian
+ * @param srcStartBit 
+ * @param srcSizeBytes 
+ * @param dst little endian
+ * @param dstStartBit 
+ * @param dstSizeBytes 
+ * @param n number of bits to copy 
+ */
 void copyBitsL(uint8_t* src, unsigned int srcStartBit, unsigned int srcSizeBytes, uint8_t* dst, unsigned int dstStartBit,unsigned int dstSizeBytes, unsigned int n) {
     for (unsigned int i = 0; i < n; i++) {
         int srcPos = srcStartBit + i;
@@ -20,6 +40,16 @@ void copyBitsL(uint8_t* src, unsigned int srcStartBit, unsigned int srcSizeBytes
     }
 }
 
+/**
+ * @brief Copy bits from big endian src to little endian dst
+ * 
+ * @param src big endian
+ * @param srcStartBit 
+ * @param dst little endian
+ * @param dstStartBit 
+ * @param dstSizeBytes 
+ * @param n number of bits to copy 
+ */
 void copyBitsB2L(uint8_t* src, unsigned int srcStartBit, uint8_t* dst, unsigned int dstStartBit, unsigned int dstSizeBytes, unsigned int n) {
     for (unsigned int i = 0; i < n; i++) {
         int srcPos = srcStartBit + i;
@@ -30,6 +60,16 @@ void copyBitsB2L(uint8_t* src, unsigned int srcStartBit, uint8_t* dst, unsigned 
     }
 }
 
+/**
+ * @brief Copy bits from little endian src to big endian dst
+ * 
+ * @param src 
+ * @param srcStartBit 
+ * @param srcSizeBytes 
+ * @param dst 
+ * @param dstStartBit 
+ * @param n number of bits to copy 
+ */
 void copyBitsL2B(uint8_t* src, unsigned int srcStartBit, unsigned int srcSizeBytes, uint8_t* dst, unsigned int dstStartBit, unsigned int n) {
     for (unsigned int i = 0; i < n; i++) {
         int srcPos = srcStartBit + i;
