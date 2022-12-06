@@ -67,6 +67,8 @@ void DataSelector::updateDataPoints()
 #endif
 
     // This is where I would put the semaphore wait if we were using per-sensor file semaphores
+    // The current implementation has the code that calls selectData() lock the semaphores, so the semaphore lock does not have to be here
+    // In the future it would be good to have per-sensor file semaphores that were stored in the SensorMap class
 
     // Open the file for that sensor's data
     sensorFile.open(path, std::ios_base::binary);
