@@ -48,7 +48,7 @@ Notes about sensor parameters:
 - Generally speaking, the number of bits per sample should be the smallest number of bits required to uniquely represent all possible outputs from the sensor.
 - If a sensor can output negative numbers, then the sensor offset needs to be equal to the negation of the lowest possible negative number that the sensor can output. (For example, if a sensor can output down to -124, then the offset needs to be 124.) Otherwise the offset should be 0.
 - If a sensor outputs decimal values and you want to preserve those demical values, then set the multiplier to 10<sup>n</sup> where n is the number of decimal places you wish to preserve. Otherwise the multiplier should be 1.
-- Ensure that the sensor ID is less than or equal to the highest number which can be represented by the value of `SENSOR_ID_BITS' under the Packet Configuration section of `config.h`. For example: if `SENSOR_ID_BITS' is set to 4, the largest possible sensor ID is 15
+- Ensure that the sensor ID is less than or equal to the highest number which can be represented by the value of `SENSOR_ID_BITS` under the Packet Configuration section of `config.h`. For example: if `SENSOR_ID_BITS` is set to 4, the largest possible sensor ID is 15
 
 To add validation parameters to the new sensor, the following things must be done:
 1) Make new #define configuration parameters for the sensor in the "Valdity Configuration" section of `config.h` that immitate the existing sensor parameters in that section. Set the high and low values as desired.
