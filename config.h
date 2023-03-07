@@ -22,8 +22,8 @@
 #define PACKET_DELAY 0
 
 // File Paths 
-const std::string SENSOR_DATA_PATH = "./data/"; // This directory must exist before running the program, must end with /
-const std::string PACKET_DATA_PATH = "./packets/"; // This directory must exist before running the program, must end with /
+const std::string SENSOR_DATA_PATH = "/home/pi/chris-test/CS-499-Senior-Design/data/"; // This directory must exist before running the program, must end with /
+const std::string PACKET_DATA_PATH = "/home/pi/chris-test/CS-499-Senior-Design/packets/"; // This directory must exist before running the program, must end with /
 
 // Serial port which interfaces with Feather M4 Express
 #define SERIAL_FEATHER "/dev/ttyS1"
@@ -105,8 +105,8 @@ const std::string PACKET_DATA_PATH = "./packets/"; // This directory must exist 
 #define TC_LOW -1000
 #define TC_MAX 10000
 
-#define ACC_LOW -15
-#define ACC_HIGH 15
+#define ACC_LOW -100
+#define ACC_HIGH 100
 
 ////////////////////////////////////
 //
