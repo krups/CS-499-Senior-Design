@@ -5,7 +5,7 @@ GOAL = kaps
 run: $(GOAL)
 	sudo ./$(GOAL)
 
-kaps: main.cpp data.cpp DataSelector.cpp Sensors.cpp copyBits.cpp
+kaps: main.cpp data.cpp DataSelector.cpp Sensors.cpp copyBits.cpp config.h
 	g++ -o $(GOAL) $^ $(FLAGS)
 
 cleanData:
@@ -17,7 +17,7 @@ cleanPackets:
 test: test.cpp data.cpp Sensors.cpp copyBits.cpp
 	g++ -o test $^ $(test_f)
 
-decode: decode.cpp Sensors.cpp copyBits.cpp
+decode: decode.cpp Sensors.cpp copyBits.cpp config.h
 	g++ -o decode $^ $(test_f)
 
 clean:

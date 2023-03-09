@@ -121,7 +121,7 @@ void DataSelector::updateDataPoints()
           dataPoints[sensorId]->push_back(newDataPoint);
 
 #ifdef DATA_SEL_P
-          std::cout << "MORE DATA SENSOR " << sensorId << " INDEX " << newDataPoint.fileIndex std::endl;
+          std::cout << "MORE DATA SENSOR " << sensorId << " INDEX " << newDataPoint.fileIndex << std::endl;
 #endif
         }
       }

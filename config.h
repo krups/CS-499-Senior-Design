@@ -102,8 +102,8 @@ const std::string PACKET_DATA_PATH = "/home/pi/chris-test/CS-499-Senior-Design/p
 // Make sure to check values 
 // in the checkValid() 
 // function in main.cpp
-#define TC_LOW -1000
-#define TC_MAX 10000
+#define TC_LOW 0
+#define TC_MAX 5000
 
 #define ACC_LOW -100
 #define ACC_HIGH 100
@@ -127,11 +127,12 @@ const std::string PACKET_DATA_PATH = "/home/pi/chris-test/CS-499-Senior-Design/p
 #define DEBUG // comment/uncomment to enable/disable debugging logs
 #ifdef DEBUG
 #define PRINT_DATA
-//#define PACKET_P
+#define PACKET_P
 #define VALIDITY_P
-// #define DEBUG_P
-//#define DATA_SEL_P // debug statements in DataSelector.cpp
-// #define DATA_P // debug statements in data.cpp
+#define DEBUG_P
+#define DATA_SEL_P // debug statements in DataSelector.cpp
+#define DATA_P // debug statements in data.cpp
 #endif
+// test
 
 #endif
