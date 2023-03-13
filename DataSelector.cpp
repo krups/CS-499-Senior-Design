@@ -395,7 +395,7 @@ std::vector<DataPoint *> *DataSelector::selectData()
       if (iteration >= nextIterationPerSensor[sensorId])
       {
 #ifdef DATA_SEL_P
-          printf("attempt for sensor: %d iteration: \n", sensorId, iteration);
+          printf("attempt for sensor: %d iteration: %d \n", sensorId, iteration);
           printf("num picked for this sensor: %d\n", pointsPerSensor[sensorId]);
           printf("usedSpace: %d\n", usedSpace);
           printf("total space: %d\n", PACKET_SIZE_BITS);
