@@ -9,6 +9,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <math.h>
+#include <filesystem>
 
 #include "config.h"
 #include "data.h"
@@ -335,6 +336,12 @@ void *IOThread(void *arguments)
 
 int main()
 {
+    // Clean up data and packet folders from previous runs
+    std::filesystem::remove_all(SENSOR_DATA_PATH);
+    std::filesystem::remove_all(PACKET_DATA_PATH);
+    mkdir(SENSOR_DATA_PATH.c_str(), 0777);
+    mkdir(PACKET_DATA_PATH.c_str(), 0777);
+
     // Initialize packet buffer to zeros
     memset(packetBuffer, '\0', PACKET_SIZE);
 
