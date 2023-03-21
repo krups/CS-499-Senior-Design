@@ -125,6 +125,11 @@ void DataSelector::updateDataPoints()
           std::cout << "MORE DATA SENSOR " << sensorId << " INDEX " << newDataPoint.fileIndex;
 #endif
 
+#ifdef LOGAN_DEBUG
+	  std::cout << "Sensor: " << newDataPoint.sensor_id << " numIncludes: " << newDataPoint.numIncludes;
+	  std:: cout << " gradient: " << newDataPoint.gradient << std::endl;
+#endif
+
           int value = 0;
           
           // Get value for this data point
@@ -651,7 +656,7 @@ void DataSelector::markUsed()
         // Increment the number of times that this data point has been used
         targetDataPoint->numIncludes++;
 
-#ifdef DATA_SEL_P
+#ifdef LOGAN_DEBUG
         std::cout << "marked used sensor " << targetDataPoint->sensor_id << " index " << sensorDataIndex << " used " << targetDataPoint->numIncludes << " times" << std::endl;
 #endif
 
