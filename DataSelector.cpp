@@ -1,4 +1,5 @@
 #include "DataSelector.h"
+#include "copyBits.h"
 
 #include <iostream>
 
@@ -60,7 +61,7 @@ void DataSelector::updateDataPoints()
     unsigned int bufferSize = (sensorSettings->numBitsPerDataPoint + 7) / 8; // This rounds up to next byte threshold
     char *buffer = new char[bufferSize + 1];
 
-#ifdef DATA_SEL_P
+#ifdef LUKE_DEBUG
     std::cout << "UPDATING DATA POINTS" << std::endl;
     std::cout << "--------------------" << std::endl;
     std::cout << "sensor: " << sensorId << std::endl;
@@ -81,7 +82,7 @@ void DataSelector::updateDataPoints()
       // If there were previously tracked data points
       if (lastDataPointReadIndex[sensorId] != 0)
       {
-#ifdef DATA_SEL_P
+#ifdef LUKE_DEBUG
         std::cout << "CATCHING UP " << sensorId << std::endl;
 #endif
         // Open the file to the last known data point
@@ -120,11 +121,44 @@ void DataSelector::updateDataPoints()
           // Add the new DataPoint to the vector of data points for that sensor
           dataPoints[sensorId]->push_back(newDataPoint);
 
-#ifdef DATA_SEL_P
-          std::cout << "MORE DATA SENSOR " << sensorId << " INDEX " << newDataPoint.fileIndex << std::endl;
+#ifdef LUKE_DEBUG
+          std::cout << "MORE DATA SENSOR " << sensorId << " INDEX " << newDataPoint.fileIndex;
 #endif
+
+          int value = 0;
+          
+          // Get value for this data point
+          copyBitsB2L((uint8_t *)buffer, fileIndex, (uint8_t *)&value, (sizeof(unsigned int) * 8) - sensorSettings->numBitsPerSample, sizeof(unsigned int), sensorSettings->numBitsPerSample);
+
+          if (sensorSettings->multiplier != 1) 
+          {
+            // Convert the value to a floating point number and remove the multiplier
+            double valuePrecise = (double) value / (double) sensorSettings->multiplier;
+
+            // If this sensor uses an offset, remove the offset
+            if (sensorSettings->offset != 0) 
+            {
+              valuePrecise -= (double) sensorSettings->offset;
+
+#ifdef LUKE_DEBUG
+          std::cout << " VALUE " << valuePrecise << std::endl;
+#endif
+            }
+          }
+          // If this sensor doesn't use a multiplier
+          else {
+          // Still check if it uses an offset and remove it if necessary
+          if (sensorSettings->offset != 0) 
+          {
+            value -= sensorSettings->offset;
+
+#ifdef LUKE_DEBUG
+          std::cout << " VALUE " << value << std::endl;
+#endif
+          }
         }
       }
+    }
     }
 
     // Remove the temporary buffer used for reading this sensor's data
