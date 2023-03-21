@@ -118,7 +118,7 @@ void DataSelector::updateDataPoints()
           nextDataPointID++;
           lastDataPointReadIndex[sensorId] = fileIndex;
 
-          // Add the new DataPoint to the vector of data points for that sensor
+          // Add the new DataPoint to the vector of data points for that sensor  
           dataPoints[sensorId]->push_back(newDataPoint);
 
 #ifdef LUKE_DEBUG
