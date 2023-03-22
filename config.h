@@ -113,7 +113,7 @@ const std::string PACKET_DATA_PATH = "/home/pi/chris-test/CS-499-Senior-Design/p
 //    Data Selection Configuration
 //
 ////////////////////////////////////
-#define NEW_DATA_RATIO 0.8
+#define NEW_DATA_RATIO 1
 #define POINT_INCLUDE_LIMIT 1
 
 #define NEW_DATA_GRADIENT_SELECT false
