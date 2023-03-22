@@ -22,7 +22,7 @@ DataSelector::DataSelector(SensorMap *sensors)
   {
     dataPoints[sensorId] = new std::vector<DataPoint>;
     nextUnusedDataPointIndex[sensorId] = 0;
-    lastDataPointReadIndex[sensorId] = 0;
+    lastDataPointReadIndex[sensorId] = -1;
     sensorPriorityLCM = std::lcm(sensorPriorityLCM, sensorSettings->priority);
   }
 
@@ -59,7 +59,11 @@ void DataSelector::updateDataPoints()
 
     // Determine the minimum number of bytes needed to read one data point of this sensor from the file
     unsigned int bufferSize = (sensorSettings->numBitsPerDataPoint + 7) / 8; // This rounds up to next byte threshold
-    char *buffer = new char[bufferSize + 1];
+    char *pointBeforeBuffer = new char[bufferSize + 1];
+    char *pointBuffer = new char[bufferSize + 1];
+    char *pointAfterBuffer = new char[bufferSize + 1];
+    bool firstPoint = false;
+    bool lastPoint = false;
 
 #ifdef LUKE_DEBUG
     std::cout << "UPDATING DATA POINTS" << std::endl;
@@ -80,7 +84,7 @@ void DataSelector::updateDataPoints()
       std::string row;
 
       // If there were previously tracked data points
-      if (lastDataPointReadIndex[sensorId] != 0)
+      if (lastDataPointReadIndex[sensorId] != -1)
       {
 #ifdef LUKE_DEBUG
         std::cout << "CATCHING UP " << sensorId << std::endl;
@@ -88,8 +92,8 @@ void DataSelector::updateDataPoints()
         // Open the file to the last known data point
         sensorFile.seekg(lastDataPointReadIndex[sensorId], std::ios_base::beg);
         // And discard the last data point so the read pointer is at the start of the next data point
-        memset(buffer, '\0', bufferSize + 1);
-        sensorFile.read(buffer, bufferSize);
+        memset(pointBeforeBuffer, '\0', bufferSize + 1);
+        sensorFile.read(pointBeforeBuffer, bufferSize);
       }
 
       // While no error in the file has occurred
@@ -99,8 +103,8 @@ void DataSelector::updateDataPoints()
         unsigned int fileIndex = sensorFile.tellg();
 
         // Read the data so the read pointer advances
-        memset(buffer, '\0', bufferSize + 1);
-        sensorFile.read(buffer, bufferSize);
+        memset(pointBuffer, '\0', bufferSize + 1);
+        sensorFile.read(pointBuffer, bufferSize);
 
         // If the file is still good after the read, then this point was valid
         // If there was an error, then this was the end of the file and there was no point after the last known point
@@ -122,12 +126,60 @@ void DataSelector::updateDataPoints()
           dataPoints[sensorId]->push_back(newDataPoint);
 
 #ifdef LUKE_DEBUG
-          std::cout << "MORE DATA SENSOR " << sensorId << " INDEX " << newDataPoint.fileIndex;
+          std::cout << "MORE DATA SENSOR " << sensorId << " INDEX " << newDataPoint.fileIndex << std::endl;
 #endif
 
           std::vector<int> dataValues = getDataPointValues(buffer, sensorSettings);
+
+#ifdef LUKE_DEBUG
+          for (int i = 0; i < (int)dataValues.size(); i++)
+          {
+            if (i == 0)
+            {
+              std::cout << "TIMESTAMP " << dataValues.at(i) << std::endl;
+            }
+            else
+            {
+              std::cout << "SAMPLE " << i << " VALUE " << dataValues.at(i) << std::endl;
+            }
+          }
+#endif
+          if (pointBeforeBuffer[0] == '\0')
+          {
+            sensorFile.seekg(lastDataPointReadIndex[sensorId] - ((sensorSettings->numBitsPerDataPoint + 7) / 8), std::ios_base::beg);
+            memset(pointBeforeBuffer, '\0', bufferSize + 1);
+            sensorFile.read(pointBeforeBuffer, bufferSize);
+            if (!sensorFile)
+            {
+              firstPoint = true
+            }
+          }
+
+          if (!firstPoint)
+            std::vector<int> dataValuesBefore = getDataPointValues(pointBeforeBuffer, sensorSettings);
+
+          if (pointAfterBuffer[0] == '\0')
+          {
+            sensorFile.seekg(lastDataPointReadIndex[sensorId] + ((sensorSettings->numBitsPerDataPoint + 7) / 8), std::ios_base::beg);
+            memset(pointAfterBuffer, '\0', bufferSize + 1);
+            sensorFile.read(pointAfterBuffer, bufferSize);
+            if (!sensorFile)
+            {
+              lastPoint = true
+            }
+          }
+
+          if (!lastPoint)
+            std::vector<int> dataValuesAfter = getDataPointValues(pointAfterBuffer, sensorSettings);
+
+          newDataPoint.gradient = calculateGradientValue(dataValuesBefore, dataValues, dataValuesAfter, firstPoint, lastPoint);
+
         }
       }
+
+#ifdef LUKE_DEBUG
+        std::cout << "LAST DATA POINT READ INDEX " << lastDataPointReadIndex[sensorId] << std::endl;
+#endif
     }
 
     // Remove the temporary buffer used for reading this sensor's data
@@ -674,12 +726,14 @@ void DataSelector::markUsed()
 std::vector<int> DataSelector::getDataPointValues(char *buffer, SensorSettings *sensorSettings)
 {
   int bitIndex = SENSOR_ID_BITS;
+  std::vector<int> values;
 
   // Extract the timestamp and display it
   unsigned int timestamp = 0;
   copyBitsB2L((uint8_t *)buffer, bitIndex, (uint8_t *)&timestamp, (sizeof(unsigned int) * 8) - SENSOR_TIMESTAMP_BITS, sizeof(unsigned int), SENSOR_TIMESTAMP_BITS);
   bitIndex += SENSOR_TIMESTAMP_BITS;
-#ifdef LUKE_DEBUG
+  values.push_back(timestamp);
+#ifdef GET_DATA_POINT_VALUES_DEBUG
   std::cout << " Timestamp Read from File " << timestamp << std::endl;
 #endif
 
@@ -701,7 +755,9 @@ std::vector<int> DataSelector::getDataPointValues(char *buffer, SensorSettings *
         valuePrecise -= (double) sensorSettings->offset;
       }
 
-#ifdef LUKE_DEBUG
+      values.push_back(valuePrecise);
+
+#ifdef GET_DATA_POINT_VALUES_DEBUG
       std::cout << " Data Value Read from File " << valuePrecise << std::endl;
 #endif
     }
@@ -713,11 +769,12 @@ std::vector<int> DataSelector::getDataPointValues(char *buffer, SensorSettings *
       value -= sensorSettings->offset;
     }
 
-#ifdef LUKE_DEBUG
+    values.push_back(value);
+
+#ifdef GET_DATA_POINT_VALUES_DEBUG
     std::cout << " Data Value Read from File " << value << std::endl;
 #endif
     }
   }
-  std::vector<int> vect;
-  return vect;
+  return values;
 }
