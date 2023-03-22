@@ -125,40 +125,9 @@ void DataSelector::updateDataPoints()
           std::cout << "MORE DATA SENSOR " << sensorId << " INDEX " << newDataPoint.fileIndex;
 #endif
 
-          int value = 0;
-          
-          // Get value for this data point
-          copyBitsB2L((uint8_t *)buffer, fileIndex, (uint8_t *)&value, (sizeof(unsigned int) * 8) - sensorSettings->numBitsPerSample, sizeof(unsigned int), sensorSettings->numBitsPerSample);
-
-          if (sensorSettings->multiplier != 1) 
-          {
-            // Convert the value to a floating point number and remove the multiplier
-            double valuePrecise = (double) value / (double) sensorSettings->multiplier;
-
-            // If this sensor uses an offset, remove the offset
-            if (sensorSettings->offset != 0) 
-            {
-              valuePrecise -= (double) sensorSettings->offset;
-
-#ifdef LUKE_DEBUG
-          std::cout << " VALUE " << valuePrecise << std::endl;
-#endif
-            }
-          }
-          // If this sensor doesn't use a multiplier
-          else {
-          // Still check if it uses an offset and remove it if necessary
-          if (sensorSettings->offset != 0) 
-          {
-            value -= sensorSettings->offset;
-
-#ifdef LUKE_DEBUG
-          std::cout << " VALUE " << value << std::endl;
-#endif
-          }
+          std::vector<int> dataValues = getDataPointValues(buffer, sensorSettings);
         }
       }
-    }
     }
 
     // Remove the temporary buffer used for reading this sensor's data
@@ -700,4 +669,55 @@ void DataSelector::markUsed()
       }
     }
   }
+}
+
+std::vector<int> DataSelector::getDataPointValues(char *buffer, SensorSettings *sensorSettings)
+{
+  int bitIndex = SENSOR_ID_BITS;
+
+  // Extract the timestamp and display it
+  unsigned int timestamp = 0;
+  copyBitsB2L((uint8_t *)buffer, bitIndex, (uint8_t *)&timestamp, (sizeof(unsigned int) * 8) - SENSOR_TIMESTAMP_BITS, sizeof(unsigned int), SENSOR_TIMESTAMP_BITS);
+  bitIndex += SENSOR_TIMESTAMP_BITS;
+#ifdef LUKE_DEBUG
+  std::cout << " Timestamp Read from File " << timestamp << std::endl;
+#endif
+
+  for (unsigned i = 0; i < sensorSettings->numSamplesPerDataPoint; i++)
+  {
+    int value = 0;
+    // Get value for this data point
+    copyBitsB2L((uint8_t *)buffer, bitIndex, (uint8_t *)&value, (sizeof(unsigned int) * 8) - sensorSettings->numBitsPerSample, sizeof(unsigned int), sensorSettings->numBitsPerSample);
+    bitIndex += sensorSettings->numBitsPerSample;
+
+    if (sensorSettings->multiplier != 1) 
+    {
+      // Convert the value to a floating point number and remove the multiplier
+      double valuePrecise = (double) value / (double) sensorSettings->multiplier;
+
+      // If this sensor uses an offset, remove the offset
+      if (sensorSettings->offset != 0) 
+      {
+        valuePrecise -= (double) sensorSettings->offset;
+      }
+
+#ifdef LUKE_DEBUG
+      std::cout << " Data Value Read from File " << valuePrecise << std::endl;
+#endif
+    }
+    // If this sensor doesn't use a multiplier
+    else {
+    // Still check if it uses an offset and remove it if necessary
+    if (sensorSettings->offset != 0) 
+    {
+      value -= sensorSettings->offset;
+    }
+
+#ifdef LUKE_DEBUG
+    std::cout << " Data Value Read from File " << value << std::endl;
+#endif
+    }
+  }
+  std::vector<int> vect;
+  return vect;
 }
