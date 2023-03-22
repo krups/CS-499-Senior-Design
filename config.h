@@ -66,7 +66,7 @@ const std::string PACKET_DATA_PATH = "/home/pi/chris-test/CS-499-Senior-Design/p
 #define IMU_PRIORITY 1
 #define IMU_NUM_SAMPLES_PER_DATA_POINT 6
 #define IMU_NUM_BITS_PER_SAMPLE 16
-#define IMU_OFFSET 0
+#define IMU_OFFSET 2000
 #define IMU_MULT 1
 
 // TC Sensors
