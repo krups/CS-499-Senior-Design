@@ -62,6 +62,7 @@ void DataSelector::updateDataPoints()
     char *pointBeforeBuffer = new char[bufferSize + 1];
     char *pointBuffer = new char[bufferSize + 1];
     char *pointAfterBuffer = new char[bufferSize + 1];
+    memset(pointAfterBuffer, '\0', bufferSize + 1);
     bool firstPoint = false;
     bool lastPoint = false;
 
@@ -91,9 +92,14 @@ void DataSelector::updateDataPoints()
 #endif
         // Open the file to the last known data point
         sensorFile.seekg(lastDataPointReadIndex[sensorId], std::ios_base::beg);
-        // And discard the last data point so the read pointer is at the start of the next data point
+        // And read the previous data point so the file index is at the current data point
         memset(pointBeforeBuffer, '\0', bufferSize + 1);
         sensorFile.read(pointBeforeBuffer, bufferSize);
+      }
+      // This is the first point in the file so there are no points before it
+      else
+      {
+        firstPoint = true;
       }
 
       // While no error in the file has occurred
@@ -129,7 +135,7 @@ void DataSelector::updateDataPoints()
           std::cout << "MORE DATA SENSOR " << sensorId << " INDEX " << newDataPoint.fileIndex << std::endl;
 #endif
 
-          std::vector<int> dataValues = getDataPointValues(buffer, sensorSettings);
+          std::vector<int> dataValues = getDataPointValues(pointBuffer, sensorSettings);
 
 #ifdef LUKE_DEBUG
           for (int i = 0; i < (int)dataValues.size(); i++)
@@ -144,24 +150,13 @@ void DataSelector::updateDataPoints()
             }
           }
 #endif
-          if (pointBeforeBuffer[0] == '\0')
-          {
-            sensorFile.seekg(lastDataPointReadIndex[sensorId] - ((sensorSettings->numBitsPerDataPoint + 7) / 8), std::ios_base::beg);
-            memset(pointBeforeBuffer, '\0', bufferSize + 1);
-            sensorFile.read(pointBeforeBuffer, bufferSize);
-            if (!sensorFile)
-            {
-              firstPoint = true
-            }
-          }
 
-          if (!firstPoint)
+          if (!firstPoint && dataValuesBefore == null)
             std::vector<int> dataValuesBefore = getDataPointValues(pointBeforeBuffer, sensorSettings);
 
           if (pointAfterBuffer[0] == '\0')
           {
             sensorFile.seekg(lastDataPointReadIndex[sensorId] + ((sensorSettings->numBitsPerDataPoint + 7) / 8), std::ios_base::beg);
-            memset(pointAfterBuffer, '\0', bufferSize + 1);
             sensorFile.read(pointAfterBuffer, bufferSize);
             if (!sensorFile)
             {
@@ -169,11 +164,17 @@ void DataSelector::updateDataPoints()
             }
           }
 
-          if (!lastPoint)
+          if (!lastPoint && dataValuesAfter == null)
             std::vector<int> dataValuesAfter = getDataPointValues(pointAfterBuffer, sensorSettings);
 
           newDataPoint.gradient = calculateGradientValue(dataValuesBefore, dataValues, dataValuesAfter, firstPoint, lastPoint);
 
+          dataValuesBefore = dataValues;
+          dataValues = dataValuesAfter;
+          dataValuesAfter = null;
+          pointBeforeBuffer = pointBuffer;
+          pointBuffer = pointAfterBuffer;
+          memset(pointAfterBuffer, '\0', bufferSize + 1);
         }
       }
 
