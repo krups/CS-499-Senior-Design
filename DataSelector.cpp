@@ -136,6 +136,8 @@ void DataSelector::updateDataPoints()
 #endif
 
           std::vector<int> dataValues = getDataPointValues(pointBuffer, sensorSettings);
+          std::vector<int> dataValuesBefore = getDataPointValues(pointBeforeBuffer, sensorSettings);
+          std::vector<int> dataValuesAfter = getDataPointValues(pointAfterBuffer, sensorSettings);
 
 #ifdef LUKE_DEBUG
           for (int i = 0; i < (int)dataValues.size(); i++)
@@ -151,7 +153,7 @@ void DataSelector::updateDataPoints()
           }
 #endif
 
-          if (!firstPoint && dataValuesBefore == null)
+          if (!firstPoint && dataValuesBefore.empty())
             std::vector<int> dataValuesBefore = getDataPointValues(pointBeforeBuffer, sensorSettings);
 
           if (pointAfterBuffer[0] == '\0')
@@ -160,18 +162,18 @@ void DataSelector::updateDataPoints()
             sensorFile.read(pointAfterBuffer, bufferSize);
             if (!sensorFile)
             {
-              lastPoint = true
+              lastPoint = true;
             }
           }
 
-          if (!lastPoint && dataValuesAfter == null)
+          if (!lastPoint && dataValuesAfter.empty())
             std::vector<int> dataValuesAfter = getDataPointValues(pointAfterBuffer, sensorSettings);
 
           newDataPoint.gradient = calculateGradientValue(dataValuesBefore, dataValues, dataValuesAfter, firstPoint, lastPoint);
 
           dataValuesBefore = dataValues;
           dataValues = dataValuesAfter;
-          dataValuesAfter = null;
+          dataValuesAfter.clear();
           pointBeforeBuffer = pointBuffer;
           pointBuffer = pointAfterBuffer;
           memset(pointAfterBuffer, '\0', bufferSize + 1);
@@ -184,7 +186,9 @@ void DataSelector::updateDataPoints()
     }
 
     // Remove the temporary buffer used for reading this sensor's data
-    delete[] buffer;
+    delete[] pointBuffer;
+    delete[] pointBeforeBuffer;
+    delete[] pointAfterBuffer;
 
     // Close the file
     sensorFile.close();
