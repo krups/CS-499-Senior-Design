@@ -200,6 +200,8 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
   printf("startInclusive: %u\n", startInclusive);
   printf("endExclusive: %u\n", endExclusive);
   printf("offset: %lf\n", offset);
+  for (unsigned int j = startInclusive; j < endExclusive; j++)
+      printf("SENSOR ID %u DATA POINT ID %u GRADIENT %u\n", sensorId, dataPoints[sensorId]->at(j).ID, dataPoints[sensorId]->at(j).gradient);
 #endif
 
   // If the range of available data is less than the amount of data that is trying to be selected
@@ -782,7 +784,7 @@ unsigned int DataSelector::calculateGradientValue(std::vector<int> dataValuesBef
 #ifdef GRADIENT_DEBUG
   std::cout << "CALCULATING GRADIENT" << std::endl;
 #endif
-  int change = 0;
+  double change = 0;
   double gradient;
   int samples = (int)dataValues.size() - 1;
   if (firstPoint && lastPoint)
@@ -806,7 +808,7 @@ unsigned int DataSelector::calculateGradientValue(std::vector<int> dataValuesBef
 #endif
     }
     gradient = (change / (samples * timestampDifference)) * 10;
-#ifdef GRADIENT_DEBUG
+#ifdef CALCULATED_GRADIENT_VALUE_DEBUG
     std::cout << "CHANGE = " << change << " SAMPLES = " << samples << std::endl;
     std::cout << "FIRST POINT GRADIENT " << gradient << std::endl;
 #endif
@@ -825,7 +827,7 @@ unsigned int DataSelector::calculateGradientValue(std::vector<int> dataValuesBef
 #endif
     }
     gradient = (change / (samples * timestampDifference)) * 10;
-#ifdef GRADIENT_DEBUG
+#ifdef CALCULATED_GRADIENT_VALUE_DEBUG
     std::cout << "CHANGE = " << change << " SAMPLES = " << samples << std::endl;
     std::cout << "LAST POINT GRADIENT " << gradient << std::endl;
 #endif
@@ -840,8 +842,8 @@ unsigned int DataSelector::calculateGradientValue(std::vector<int> dataValuesBef
 #ifdef GRADIENT_DEBUG
     std::cout << "TIMESTAMP DIFFERENCE AFTER BETWEEN TIMESTAMP " << dataValues[0] << " AND TIMESTAMP " << dataValuesAfter[0] << " IS " << timestampDifferenceAfter << std::endl;
 #endif
-    int changeBefore = 0;
-    int changeAfter = 0;
+    double changeBefore = 0;
+    double changeAfter = 0;
     for (int i = 1; i <= samples; i++)
     {
       changeBefore += abs(dataValues[i] - dataValuesBefore[i]);
@@ -864,7 +866,7 @@ unsigned int DataSelector::calculateGradientValue(std::vector<int> dataValuesBef
     std::cout << "GRADIENT AFTER " << gradientAfter << std::endl;
 #endif
     gradient = (gradientBefore + gradientAfter) / 2;
-#ifdef GRADIENT_DEBUG
+#ifdef CALCULATED_GRADIENT_VALUE_DEBUG
     std::cout << "GRADIENT NORMAL POINT " << gradient << std::endl;
 #endif
   }
@@ -873,5 +875,8 @@ unsigned int DataSelector::calculateGradientValue(std::vector<int> dataValuesBef
     gradient = 1;
   }
   unsigned int gradientReturned = (unsigned int)gradient;
+#ifdef CALCULATED_GRADIENT_VALUE_DEBUG
+    std::cout << "GRADIENT RETURNED " << gradientReturned << std::endl;
+#endif
   return gradientReturned;
 }

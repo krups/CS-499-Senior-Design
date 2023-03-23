@@ -113,10 +113,10 @@ const std::string PACKET_DATA_PATH = "/home/pi/chris-test/CS-499-Senior-Design/p
 //    Data Selection Configuration
 //
 ////////////////////////////////////
-#define NEW_DATA_RATIO 0.8
+#define NEW_DATA_RATIO 1
 #define POINT_INCLUDE_LIMIT 1
 
-#define NEW_DATA_GRADIENT_SELECT false
+#define NEW_DATA_GRADIENT_SELECT true
 #define OLD_DATA_GRADIENT_SELECT false
 
 //////////////////////////////
@@ -126,13 +126,14 @@ const std::string PACKET_DATA_PATH = "/home/pi/chris-test/CS-499-Senior-Design/p
 //////////////////////////////
 #define DEBUG // comment/uncomment to enable/disable debugging logs
 #ifdef DEBUG
-#define PRINT_DATA
+//#define PRINT_DATA
 // #define PACKET_P
 // #define VALIDITY_P
 // #define DEBUG_P
-// #define DATA_SEL_P // debug statements in DataSelector.cpp
+#define DATA_SEL_P // debug statements in DataSelector.cpp
 #define LUKE_DEBUG
 #define GRADIENT_DEBUG
+#define CALCULATED_GRADIENT_VALUE_DEBUG
 #define GET_DATA_POINT_VALUES_DEBUG
 // #define DATA_P // debug statements in data.cpp
 #endif
