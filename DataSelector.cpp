@@ -191,7 +191,7 @@ void DataSelector::updateDataPoints()
 
 unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsigned int numData, std::vector<DataPoint *> *tempDataPointList, unsigned int startInclusive, unsigned int endExclusive, double offset)
 {
-#ifdef DATA_SEL_P
+#ifdef GRADIENT_DATA_SELECTION_DEBUG
   printf("SELECTING DATA POINTS GRADIENT\n");
   printf("------------------------------\n");
   printf("sensorId: %d\n", sensorId);
@@ -201,7 +201,7 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
   printf("endExclusive: %u\n", endExclusive);
   printf("offset: %lf\n", offset);
   for (unsigned int j = startInclusive; j < endExclusive; j++)
-      printf("SENSOR ID %u DATA POINT ID %u GRADIENT %u\n", sensorId, dataPoints[sensorId]->at(j).ID, dataPoints[sensorId]->at(j).gradient);
+      printf("SENSOR ID %u INDEX %u DATA POINT ID %u GRADIENT %u\n", sensorId, j, dataPoints[sensorId]->at(j).ID, dataPoints[sensorId]->at(j).gradient);
 #endif
 
   // If the range of available data is less than the amount of data that is trying to be selected
@@ -233,7 +233,7 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
 
   bool allDataSelected = false;
 
-#ifdef DATA_SEL_P
+#ifdef GRADIENT_DATA_SELECTION_DEBUG
   printf("total gradient: %d\n", totalGradient);
   printf("gradient spacing: %f\n", gradientSpacing);
 #endif
@@ -251,7 +251,7 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
     // Determine how far into the total gradient we want to go before stopping and picking a point
     unsigned int targetGradient = (unsigned int) ((gradientSpacing * offset) + (gradientSpacing * index));
 
-#ifdef DATA_SEL_P
+#ifdef GRADIENT_DATA_SELECTION_DEBUG
     printf("target gradient: %d\n", targetGradient);
 #endif
 
@@ -267,7 +267,7 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
         // If the point we stopped at hasn't been picked yet
         if ((*dataPoints[sensorId])[dataPointIndex].used == false)
         {
-#ifdef DATA_SEL_P
+#ifdef GRADIENT_DATA_SELECTION_DEBUG
           printf("sensor %d added point %d fileIndex %d\n", sensorId, dataPointIndex, (*dataPoints[sensorId])[dataPointIndex].fileIndex);
 #endif
           // Pick this point and mark it so it can't be picked twice
@@ -290,7 +290,7 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
             {
               if ((*dataPoints[sensorId])[retryDataPointIndexUp].used == false)
               {
-#ifdef DATA_SEL_P
+#ifdef GRADIENT_DATA_SELECTION_DEBUG
                 printf("sensor %d added point %d retry up fileIndex %d\n", sensorId, retryDataPointIndexUp, (*dataPoints[sensorId])[retryDataPointIndexUp].fileIndex);
 #endif
                 // Pick it and mark it so it can't be picked twice
@@ -310,7 +310,7 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
               // Pick it and mark it so it can't be picked twice
               if ((*dataPoints[sensorId])[retryDataPointIndexDown].used == false)
               {
-#ifdef DATA_SEL_P
+#ifdef GRADIENT_DATA_SELECTION_DEBUG
                 printf("sensor %d added point %d retry down fileIndex %d\n", sensorId, retryDataPointIndexDown, (*dataPoints[sensorId])[retryDataPointIndexDown].fileIndex);
 #endif
                 (*dataPoints[sensorId])[retryDataPointIndexDown].used = true;
@@ -339,7 +339,11 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
       allDataSelected = true;
     }
   }
-
+#ifdef GRADIENT_DATA_SELECTION_DEBUG
+  std::cout << "DATA POINT SELECTED BY GRADIENT SELECTION" << std::endl;
+  for (int i = 0; i < (int)tempDataPointList->size(); i++)
+    std::cout << "DATA POINT ID " << tempDataPointList->at(i)->ID << " GRADIENT " << tempDataPointList->at(i)->gradient << std::endl;
+#endif
   return numPointsSelected;
 }
 
@@ -807,7 +811,7 @@ unsigned int DataSelector::calculateGradientValue(std::vector<int> dataValuesBef
       std::cout << "CALCULATING CHANGE BETWEEN " << dataValues[i] << " AND " << dataValuesAfter[i] << std::endl;
 #endif
     }
-    gradient = (change / (samples * timestampDifference)) * 10;
+    gradient = (change / (samples * timestampDifference)) * GRADIENT_SCALE;
 #ifdef CALCULATED_GRADIENT_VALUE_DEBUG
     std::cout << "CHANGE = " << change << " SAMPLES = " << samples << std::endl;
     std::cout << "FIRST POINT GRADIENT " << gradient << std::endl;
@@ -826,7 +830,7 @@ unsigned int DataSelector::calculateGradientValue(std::vector<int> dataValuesBef
       std::cout << "CALCULATING CHANGE BETWEEN " << dataValues[i] << " AND " << dataValuesBefore[i] << std::endl;
 #endif
     }
-    gradient = (change / (samples * timestampDifference)) * 10;
+    gradient = (change / (samples * timestampDifference)) * GRADIENT_SCALE;
 #ifdef CALCULATED_GRADIENT_VALUE_DEBUG
     std::cout << "CHANGE = " << change << " SAMPLES = " << samples << std::endl;
     std::cout << "LAST POINT GRADIENT " << gradient << std::endl;
@@ -855,12 +859,12 @@ unsigned int DataSelector::calculateGradientValue(std::vector<int> dataValuesBef
       std::cout << "CALCULATING CHANGE BETWEEN " << dataValues[i] << " AND " << dataValuesAfter[i] << std::endl;
 #endif
     }
-    double gradientBefore = (changeBefore / (samples * timestampDifferenceBefore)) * 10;
+    double gradientBefore = (changeBefore / (samples * timestampDifferenceBefore)) * GRADIENT_SCALE;
 #ifdef GRADIENT_DEBUG
     std::cout << "CHANGE BEFORE = " << changeBefore << " SAMPLES = " << samples << std::endl;
     std::cout << "GRADIENT BEFORE " << gradientBefore << std::endl;
 #endif
-    double gradientAfter = (changeAfter / (samples * timestampDifferenceAfter)) * 10;
+    double gradientAfter = (changeAfter / (samples * timestampDifferenceAfter)) * GRADIENT_SCALE;
 #ifdef GRADIENT_DEBUG
     std::cout << "CHANGE AFTER = " << changeAfter << " SAMPLES = " << samples << std::endl;
     std::cout << "GRADIENT AFTER " << gradientAfter << std::endl;

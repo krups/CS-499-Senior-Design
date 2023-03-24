@@ -118,6 +118,7 @@ const std::string PACKET_DATA_PATH = "/home/pi/chris-test/CS-499-Senior-Design/p
 
 #define NEW_DATA_GRADIENT_SELECT true
 #define OLD_DATA_GRADIENT_SELECT false
+#define GRADIENT_SCALE 100
 
 //////////////////////////////
 //
@@ -130,11 +131,12 @@ const std::string PACKET_DATA_PATH = "/home/pi/chris-test/CS-499-Senior-Design/p
 // #define PACKET_P
 // #define VALIDITY_P
 // #define DEBUG_P
-#define DATA_SEL_P // debug statements in DataSelector.cpp
+// #define DATA_SEL_P // debug statements in DataSelector.cpp
 #define LUKE_DEBUG
+#define GRADIENT_DATA_SELECTION_DEBUG
 #define GRADIENT_DEBUG
-#define CALCULATED_GRADIENT_VALUE_DEBUG
-#define GET_DATA_POINT_VALUES_DEBUG
+//#define CALCULATED_GRADIENT_VALUE_DEBUG
+//#define GET_DATA_POINT_VALUES_DEBUG
 // #define DATA_P // debug statements in data.cpp
 #endif
 // test
