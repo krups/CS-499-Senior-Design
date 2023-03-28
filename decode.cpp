@@ -154,9 +154,9 @@ int main()
 
     // Prepare a buffer to read in lines of data
     // Add an extra null byte to make sure you don't accidentally read past the end of the packet when processing the packet data
-    int numBytes = ((sensors.sensorMap[stoi(filename)]->numBitsPerDataPoint + 7) / 8) + 1;
-    char *line = new char[numBytes];
-    memset(line, '\0', numBytes);
+    int numBytes = ((sensors.sensorMap[stoi(filename)]->numBitsPerDataPoint + 7) / 8);
+    char *line = new char[numBytes + 1];
+    memset(line, '\0', numBytes + 1);
 
     // Open the packet file and read the contents
     dataFile.open(path, std::ios_base::in);
@@ -235,9 +235,6 @@ int main()
 
           // Add a newline at the end of that data point
           std::cout << std::endl;
-          // Reset the data buffer
-          memset(line, '\0', numBytes);
-          dataFile.read(line, numBytes);
         }
         // If the sensor ID is invalid
         else
@@ -254,6 +251,9 @@ int main()
         std::cout << "End of data file" << std::endl;
         moreData = false;
       }
+      // Reset the data buffer
+      memset(line, '\0', numBytes);
+      dataFile.read(line, numBytes);
     }
   }
 
