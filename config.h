@@ -118,7 +118,7 @@ const std::string PACKET_DATA_PATH = "/home/pi/chris-test/CS-499-Senior-Design/p
 
 #define NEW_DATA_GRADIENT_SELECT true
 #define OLD_DATA_GRADIENT_SELECT false
-#define GRADIENT_SCALE 100
+#define GRADIENT_SCALE 100 //If gradient values are too small (timestamp changes are larger than value changes) this can be used to scale them up
 
 //////////////////////////////
 //
@@ -132,9 +132,7 @@ const std::string PACKET_DATA_PATH = "/home/pi/chris-test/CS-499-Senior-Design/p
 // #define VALIDITY_P
 // #define DEBUG_P
 // #define DATA_SEL_P // debug statements in DataSelector.cpp
-#define LUKE_DEBUG
-#define GRADIENT_DATA_SELECTION_DEBUG
-#define GRADIENT_DEBUG
+// #define GRADIENT_DATA_SELECTION_DEBUG
 //#define CALCULATED_GRADIENT_VALUE_DEBUG
 //#define GET_DATA_POINT_VALUES_DEBUG
 // #define DATA_P // debug statements in data.cpp
