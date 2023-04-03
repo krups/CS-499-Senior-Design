@@ -805,7 +805,7 @@ unsigned int DataSelector::calculateGradientValue(std::vector<int> dataValuesBef
     }
     gradient = (change / (samples * timestampDifference)) * GRADIENT_SCALE;
 #ifdef CALCULATED_GRADIENT_VALUE_DEBUG
-    std::cout << "CHANGE = " << change << " SAMPLES = " << samples << std::endl;
+    std::cout << "CHANGE = " << change << " SAMPLES = " << samples << " TIMESTAMP DIFFERENCE = " << timestampDifference << std::endl;
     std::cout << "FIRST POINT GRADIENT " << gradient << std::endl;
 #endif
   }
@@ -819,7 +819,7 @@ unsigned int DataSelector::calculateGradientValue(std::vector<int> dataValuesBef
     }
     gradient = (change / (samples * timestampDifference)) * GRADIENT_SCALE;
 #ifdef CALCULATED_GRADIENT_VALUE_DEBUG
-    std::cout << "CHANGE = " << change << " SAMPLES = " << samples << std::endl;
+    std::cout << "CHANGE = " << change << " SAMPLES = " << samples << " TIMESTAMP DIFFERENCE = " << timestampDifference << std::endl;
     std::cout << "LAST POINT GRADIENT " << gradient << std::endl;
 #endif
   }
@@ -838,12 +838,12 @@ unsigned int DataSelector::calculateGradientValue(std::vector<int> dataValuesBef
     }
     double gradientBefore = (changeBefore / (samples * timestampDifferenceBefore)) * GRADIENT_SCALE;
 #ifdef CALCULATED_GRADIENT_VALUE_DEBUG
-    std::cout << "CHANGE BEFORE = " << changeBefore << " SAMPLES = " << samples << std::endl;
+    std::cout << "CHANGE BEFORE = " << changeBefore << " SAMPLES = " << samples << " TIMESTAMP DIFFERENCE BEFORE = " << timestampDifferenceBefore << std::endl;
     std::cout << "GRADIENT BEFORE " << gradientBefore << std::endl;
 #endif
     double gradientAfter = (changeAfter / (samples * timestampDifferenceAfter)) * GRADIENT_SCALE;
 #ifdef CALCULATED_GRADIENT_VALUE_DEBUG
-    std::cout << "CHANGE AFTER = " << changeAfter << " SAMPLES = " << samples << std::endl;
+    std::cout << "CHANGE AFTER = " << changeAfter << " SAMPLES = " << samples << " TIMESTAMP DIFFERENCE AFTER = " << timestampDifferenceAfter << std::endl;
     std::cout << "GRADIENT AFTER " << gradientAfter << std::endl;
 #endif
     gradient = (gradientBefore + gradientAfter) / 2;
