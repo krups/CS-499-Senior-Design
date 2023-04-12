@@ -10,7 +10,7 @@
 //
 //////////////////////////////
 // Packet size in bytes
-#define PACKET_SIZE 340
+#define PACKET_SIZE 1960
 #define PACKET_SIZE_BITS (PACKET_SIZE * 8)
 
 // Sensor metadata size in bytes
@@ -128,9 +128,9 @@ const std::string PACKET_DATA_PATH = "/home/pi/chris-test/CS-499-Senior-Design/p
 #define DEBUG // comment/uncomment to enable/disable debugging logs
 #ifdef DEBUG
 #define PRINT_DATA
-// #define PACKET_P
+#define PACKET_P
 // #define VALIDITY_P
-// #define DEBUG_P
+#define DEBUG_P
 //#define DATA_SEL_P // debug statements in DataSelector.cpp
 //#define GRADIENT_DATA_SELECTION_DEBUG
 //#define CALCULATED_GRADIENT_VALUE_DEBUG
