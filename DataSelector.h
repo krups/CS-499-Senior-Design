@@ -19,6 +19,8 @@ class DataSelector {
     void updateDataPoints();
     unsigned int selectDataPointsGradient(unsigned int sensorId, unsigned int numData, std::vector<DataPoint*>* tempDataPointList, unsigned int startInclusive, unsigned int endExclusive, double offset);
     unsigned int selectDataPointsIndex(unsigned int sensorId, unsigned int numData, std::vector<DataPoint*>* tempDataPointList, unsigned int startInclusive, unsigned int endExclusive, double offset);
+    std::vector<int> getDataPointValues(char *buffer, SensorSettings *sensorSettings);
+    unsigned int calculateGradientValue(std::vector<int> dataValuesBefore, std::vector<int> dataValues, std::vector<int> dataValuesAfter, bool firstPoint, bool lastPoint);
 
     SensorMap* sensors;
     

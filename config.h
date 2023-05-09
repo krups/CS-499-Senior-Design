@@ -10,7 +10,7 @@
 //
 //////////////////////////////
 // Packet size in bytes
-#define PACKET_SIZE 340
+#define PACKET_SIZE 1960
 #define PACKET_SIZE_BITS (PACKET_SIZE * 8)
 
 // Sensor metadata size in bytes
@@ -40,25 +40,25 @@ const std::string PACKET_DATA_PATH = "/home/pi/chris-test/CS-499-Senior-Design/p
 // GPS 
 #define GPS_ID 1
 #define GPS_PRIORITY 1
-#define GPS_NUM_SAMPLES_PER_DATA_POINT 5
-#define GPS_NUM_BITS_PER_SAMPLE 16
-#define GPS_OFFSET 0
-#define GPS_MULT 1
+#define GPS_NUM_SAMPLES_PER_DATA_POINT 8
+#define GPS_NUM_BITS_PER_SAMPLE 20
+#define GPS_OFFSET 180
+#define GPS_MULT 1000
 
 // RMC 
 #define RMC_ID 2
 #define RMC_PRIORITY 1
-#define RMC_NUM_SAMPLES_PER_DATA_POINT 5
-#define RMC_NUM_BITS_PER_SAMPLE 16
-#define RMC_OFFSET 0
-#define RMC_MULT 1
+#define RMC_NUM_SAMPLES_PER_DATA_POINT 7
+#define RMC_NUM_BITS_PER_SAMPLE 20
+#define RMC_OFFSET 180
+#define RMC_MULT 1000
 
 // ACC sensor
 #define ACC_ID 3
 #define ACC_PRIORITY 1
 #define ACC_NUM_SAMPLES_PER_DATA_POINT 3
 #define ACC_NUM_BITS_PER_SAMPLE 8
-#define ACC_OFFSET 0
+#define ACC_OFFSET 100
 #define ACC_MULT 1
 
 // IMU Sensor
@@ -66,7 +66,7 @@ const std::string PACKET_DATA_PATH = "/home/pi/chris-test/CS-499-Senior-Design/p
 #define IMU_PRIORITY 1
 #define IMU_NUM_SAMPLES_PER_DATA_POINT 6
 #define IMU_NUM_BITS_PER_SAMPLE 16
-#define IMU_OFFSET 0
+#define IMU_OFFSET 2000
 #define IMU_MULT 1
 
 // TC Sensors
@@ -113,11 +113,12 @@ const std::string PACKET_DATA_PATH = "/home/pi/chris-test/CS-499-Senior-Design/p
 //    Data Selection Configuration
 //
 ////////////////////////////////////
-#define NEW_DATA_RATIO 0.8
+#define NEW_DATA_RATIO 1
 #define POINT_INCLUDE_LIMIT 1
 
-#define NEW_DATA_GRADIENT_SELECT false
-#define OLD_DATA_GRADIENT_SELECT false
+#define NEW_DATA_GRADIENT_SELECT true
+#define OLD_DATA_GRADIENT_SELECT true
+#define GRADIENT_SCALE 100 //If gradient values are too small (timestamp changes are larger than value changes) this can be used to scale them up
 
 //////////////////////////////
 //
@@ -128,10 +129,13 @@ const std::string PACKET_DATA_PATH = "/home/pi/chris-test/CS-499-Senior-Design/p
 #ifdef DEBUG
 #define PRINT_DATA
 #define PACKET_P
-#define VALIDITY_P
+// #define VALIDITY_P
 #define DEBUG_P
-#define DATA_SEL_P // debug statements in DataSelector.cpp
-#define DATA_P // debug statements in data.cpp
+//#define DATA_SEL_P // debug statements in DataSelector.cpp
+//#define GRADIENT_DATA_SELECTION_DEBUG
+//#define CALCULATED_GRADIENT_VALUE_DEBUG
+//#define GET_DATA_POINT_VALUES_DEBUG
+// #define DATA_P // debug statements in data.cpp
 #endif
 // test
 

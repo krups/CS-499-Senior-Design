@@ -1,4 +1,5 @@
 #include "DataSelector.h"
+#include "copyBits.h"
 
 #include <iostream>
 
@@ -21,7 +22,7 @@ DataSelector::DataSelector(SensorMap *sensors)
   {
     dataPoints[sensorId] = new std::vector<DataPoint>;
     nextUnusedDataPointIndex[sensorId] = 0;
-    lastDataPointReadIndex[sensorId] = 0;
+    lastDataPointReadIndex[sensorId] = -1;
     sensorPriorityLCM = std::lcm(sensorPriorityLCM, sensorSettings->priority);
   }
 
@@ -58,7 +59,13 @@ void DataSelector::updateDataPoints()
 
     // Determine the minimum number of bytes needed to read one data point of this sensor from the file
     unsigned int bufferSize = (sensorSettings->numBitsPerDataPoint + 7) / 8; // This rounds up to next byte threshold
-    char *buffer = new char[bufferSize + 1];
+    char *pointBuffer = new char[bufferSize + 1]; // Stores point
+    // All used in gradient calculations
+    bool firstPoint = false;
+    bool lastPoint = false;
+    std::vector<int> dataValuesBefore;
+    std::vector<int> dataValues;
+    std::vector<int> dataValuesAfter;
 
 #ifdef DATA_SEL_P
     std::cout << "UPDATING DATA POINTS" << std::endl;
@@ -79,56 +86,92 @@ void DataSelector::updateDataPoints()
       std::string row;
 
       // If there were previously tracked data points
-      if (lastDataPointReadIndex[sensorId] != 0)
+      if (lastDataPointReadIndex[sensorId] != -1)
       {
 #ifdef DATA_SEL_P
         std::cout << "CATCHING UP " << sensorId << std::endl;
 #endif
         // Open the file to the last known data point
         sensorFile.seekg(lastDataPointReadIndex[sensorId], std::ios_base::beg);
-        // And discard the last data point so the read pointer is at the start of the next data point
-        memset(buffer, '\0', bufferSize + 1);
-        sensorFile.read(buffer, bufferSize);
+        // And read the previous data point so the file index is at the current data point
+        memset(pointBuffer, '\0', bufferSize + 1);
+        sensorFile.read(pointBuffer, bufferSize);
+        // Get data values for the point before - used in gradient calculation
+        dataValuesBefore = getDataPointValues(pointBuffer, sensorSettings);
+      }
+      // This is the first point in the file so there are no points before it
+      else
+      {
+        firstPoint = true;
       }
 
+      // Record the current file index
+      unsigned int fileIndex = sensorFile.tellg();
+
+      // Read the data point that is going to be created, the read pointer advances
+      memset(pointBuffer, '\0', bufferSize + 1);
+      sensorFile.read(pointBuffer, bufferSize);
+      // Get data values for this point
+      dataValues = getDataPointValues(pointBuffer, sensorSettings);
+
       // While no error in the file has occurred
-      while (sensorFile)
+      while (pointBuffer[0] != '\0')
       {
-        // Record the current file index
-        unsigned int fileIndex = sensorFile.tellg();
-
-        // Read the data so the read pointer advances
-        memset(buffer, '\0', bufferSize + 1);
-        sensorFile.read(buffer, bufferSize);
-
         // If the file is still good after the read, then this point was valid
         // If there was an error, then this was the end of the file and there was no point after the last known point
-        if (sensorFile) {
-          // Initialize a new class for the new data point and set the initial values
-          DataPoint newDataPoint;
-          newDataPoint.sensor_id = sensorId;
-          newDataPoint.numIncludes = 0;
-          newDataPoint.fileIndex = fileIndex;
-          newDataPoint.used = false;
-          newDataPoint.gradient = 1; // This is currently a hard-code and should be updated to use data from the file when the gradient selection feature is finished (the gradient should likely be computed in the I/O thread and the gradient is simply included in the data file and read from the file here)
-          newDataPoint.ID = nextDataPointID;
+        // Initialize a new class for the new data point and set the initial values
+        DataPoint newDataPoint;
+        newDataPoint.sensor_id = sensorId;
+        newDataPoint.numIncludes = 0;
+        newDataPoint.fileIndex = fileIndex;
+        newDataPoint.used = false;
+        newDataPoint.gradient = 1; // This is currently a hard-code and should be updated to use data from the file when the gradient selection feature is finished (the gradient should likely be computed in the I/O thread and the gradient is simply included in the data file and read from the file here)
+        newDataPoint.ID = nextDataPointID;
 
-          // Update internal variables
-          nextDataPointID++;
-          lastDataPointReadIndex[sensorId] = fileIndex;
+        // Update internal variables
+        nextDataPointID++;
+        lastDataPointReadIndex[sensorId] = fileIndex;
 
-          // Add the new DataPoint to the vector of data points for that sensor
-          dataPoints[sensorId]->push_back(newDataPoint);
-
-#ifdef DATA_SEL_P
-          std::cout << "MORE DATA SENSOR " << sensorId << " INDEX " << newDataPoint.fileIndex << std::endl;
-#endif
+        // Read the point after the current point for gradient calculations
+        fileIndex = sensorFile.tellg();
+        memset(pointBuffer, '\0', bufferSize + 1);
+        sensorFile.read(pointBuffer, bufferSize);
+        if (!sensorFile)
+        {
+          lastPoint = true;
         }
+        else
+        {
+          // Get data values for the point after
+          dataValuesAfter = getDataPointValues(pointBuffer, sensorSettings);
+        }
+        //Calculate gradient for the newly created data point
+        newDataPoint.gradient = calculateGradientValue(dataValuesBefore, dataValues, dataValuesAfter, firstPoint, lastPoint);
+#ifdef DATA_SEL_P
+        std::cout << "DATA POINT ID " << newDataPoint.ID << " GRADIENT CALCULATED " << newDataPoint.gradient << std::endl;
+#endif
+        // If data point was not the last point in the file we will use a sliding window approach to continue creation of data points
+        if (!lastPoint)
+        {
+          dataValuesBefore = dataValues;
+          dataValues = dataValuesAfter;
+          dataValuesAfter.clear();
+        }
+        else
+        {
+          memset(pointBuffer, '\0', bufferSize + 1);
+        }
+
+        // Add the new DataPoint to the vector of data points for that sensor
+        dataPoints[sensorId]->push_back(newDataPoint);
       }
     }
 
+#ifdef DATA_SEL_P
+        std::cout << "LAST DATA POINT READ INDEX " << lastDataPointReadIndex[sensorId] << std::endl;
+#endif
     // Remove the temporary buffer used for reading this sensor's data
-    delete[] buffer;
+    delete[] pointBuffer;
 
     // Close the file
     sensorFile.close();
@@ -139,7 +182,7 @@ void DataSelector::updateDataPoints()
 
 unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsigned int numData, std::vector<DataPoint *> *tempDataPointList, unsigned int startInclusive, unsigned int endExclusive, double offset)
 {
-#ifdef DATA_SEL_P
+#ifdef GRADIENT_DATA_SELECTION_DEBUG
   printf("SELECTING DATA POINTS GRADIENT\n");
   printf("------------------------------\n");
   printf("sensorId: %d\n", sensorId);
@@ -148,6 +191,8 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
   printf("startInclusive: %u\n", startInclusive);
   printf("endExclusive: %u\n", endExclusive);
   printf("offset: %lf\n", offset);
+  for (unsigned int j = startInclusive; j < endExclusive; j++)
+      printf("SENSOR ID %u INDEX %u DATA POINT ID %u GRADIENT %u\n", sensorId, j, dataPoints[sensorId]->at(j).ID, dataPoints[sensorId]->at(j).gradient);
 #endif
 
   // If the range of available data is less than the amount of data that is trying to be selected
@@ -179,7 +224,7 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
 
   bool allDataSelected = false;
 
-#ifdef DATA_SEL_P
+#ifdef GRADIENT_DATA_SELECTION_DEBUG
   printf("total gradient: %d\n", totalGradient);
   printf("gradient spacing: %f\n", gradientSpacing);
 #endif
@@ -197,7 +242,7 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
     // Determine how far into the total gradient we want to go before stopping and picking a point
     unsigned int targetGradient = (unsigned int) ((gradientSpacing * offset) + (gradientSpacing * index));
 
-#ifdef DATA_SEL_P
+#ifdef GRADIENT_DATA_SELECTION_DEBUG
     printf("target gradient: %d\n", targetGradient);
 #endif
 
@@ -213,7 +258,7 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
         // If the point we stopped at hasn't been picked yet
         if ((*dataPoints[sensorId])[dataPointIndex].used == false)
         {
-#ifdef DATA_SEL_P
+#ifdef GRADIENT_DATA_SELECTION_DEBUG
           printf("sensor %d added point %d fileIndex %d\n", sensorId, dataPointIndex, (*dataPoints[sensorId])[dataPointIndex].fileIndex);
 #endif
           // Pick this point and mark it so it can't be picked twice
@@ -236,7 +281,7 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
             {
               if ((*dataPoints[sensorId])[retryDataPointIndexUp].used == false)
               {
-#ifdef DATA_SEL_P
+#ifdef GRADIENT_DATA_SELECTION_DEBUG
                 printf("sensor %d added point %d retry up fileIndex %d\n", sensorId, retryDataPointIndexUp, (*dataPoints[sensorId])[retryDataPointIndexUp].fileIndex);
 #endif
                 // Pick it and mark it so it can't be picked twice
@@ -256,7 +301,7 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
               // Pick it and mark it so it can't be picked twice
               if ((*dataPoints[sensorId])[retryDataPointIndexDown].used == false)
               {
-#ifdef DATA_SEL_P
+#ifdef GRADIENT_DATA_SELECTION_DEBUG
                 printf("sensor %d added point %d retry down fileIndex %d\n", sensorId, retryDataPointIndexDown, (*dataPoints[sensorId])[retryDataPointIndexDown].fileIndex);
 #endif
                 (*dataPoints[sensorId])[retryDataPointIndexDown].used = true;
@@ -285,7 +330,11 @@ unsigned int DataSelector::selectDataPointsGradient(unsigned int sensorId, unsig
       allDataSelected = true;
     }
   }
-
+#ifdef GRADIENT_DATA_SELECTION_DEBUG
+  std::cout << "DATA POINT SELECTED BY GRADIENT SELECTION" << std::endl;
+  for (int i = 0; i < (int)tempDataPointList->size(); i++)
+    std::cout << "DATA POINT ID " << tempDataPointList->at(i)->ID << " GRADIENT " << tempDataPointList->at(i)->gradient << std::endl;
+#endif
   return numPointsSelected;
 }
 
@@ -666,4 +715,151 @@ void DataSelector::markUsed()
       }
     }
   }
+}
+
+// Similar to the decode.cpp application given a buffer and sensor settings this function will decode the file to get the sample values
+// Sensor sample values will be used in gradient calculation for that data point
+// Returns a vector of integer sensor sample values (first value is timestamp, rest are sensor values)
+std::vector<int> DataSelector::getDataPointValues(char *buffer, SensorSettings *sensorSettings)
+{
+  // bitIndex stores the index to read from the buffer at
+  int bitIndex = SENSOR_ID_BITS;
+  std::vector<int> values;
+
+  // Extract the timestamp and add it to the vector
+  unsigned int timestamp = 0;
+  copyBitsB2L((uint8_t *)buffer, bitIndex, (uint8_t *)&timestamp, (sizeof(unsigned int) * 8) - SENSOR_TIMESTAMP_BITS, sizeof(unsigned int), SENSOR_TIMESTAMP_BITS);
+  bitIndex += SENSOR_TIMESTAMP_BITS;
+  values.push_back(timestamp);
+#ifdef GET_DATA_POINT_VALUES_DEBUG
+  std::cout << " Timestamp Read from File " << timestamp << std::endl;
+#endif
+  // For each sample in this data point read the value
+  for (unsigned i = 0; i < sensorSettings->numSamplesPerDataPoint; i++)
+  {
+    int value = 0;
+    // Get value for this data point
+    copyBitsB2L((uint8_t *)buffer, bitIndex, (uint8_t *)&value, (sizeof(unsigned int) * 8) - sensorSettings->numBitsPerSample, sizeof(unsigned int), sensorSettings->numBitsPerSample);
+    bitIndex += sensorSettings->numBitsPerSample;
+
+    if (sensorSettings->multiplier != 1) 
+    {
+      // Convert the value to a floating point number and remove the multiplier
+      double valuePrecise = (double) value / (double) sensorSettings->multiplier;
+
+      // If this sensor uses an offset, remove the offset
+      if (sensorSettings->offset != 0) 
+      {
+        valuePrecise -= (double) sensorSettings->offset;
+      }
+
+      values.push_back(valuePrecise);
+
+#ifdef GET_DATA_POINT_VALUES_DEBUG
+      std::cout << " Data Value Read from File " << valuePrecise << std::endl;
+#endif
+    }
+    // If this sensor doesn't use a multiplier
+    else {
+    // Still check if it uses an offset and remove it if necessary
+    if (sensorSettings->offset != 0) 
+    {
+      value -= sensorSettings->offset;
+    }
+    // Add value to vector to be returned
+    values.push_back(value);
+
+#ifdef GET_DATA_POINT_VALUES_DEBUG
+    std::cout << " Data Value Read from File " << value << std::endl;
+#endif
+    }
+  }
+  return values;
+}
+
+// Uses a specific algorithm to calculate gradient value for a data point. 
+// Parameters are three vectors holding sensor data values at timestamps and booleans to tell whether data point examined is first or last data point in file
+// Returns a positive gradient value. If gradient was calculated to be less than 1, it is defaulted to 1
+unsigned int DataSelector::calculateGradientValue(std::vector<int> dataValuesBefore, std::vector<int> dataValues, std::vector<int> dataValuesAfter, bool firstPoint, bool lastPoint)
+{
+#ifdef CALCULATED_GRADIENT_VALUE_DEBUG
+  std::cout << "CALCULATING GRADIENT" << std::endl;
+#endif
+  double change = 0; // Holds absolute value change between data points
+  double gradient;
+  int samples = (int)dataValues.size() - 1;
+  if (firstPoint && lastPoint)
+  {
+#ifdef CALCULATED_GRADIENT_VALUE_DEBUG
+  std::cout << "DEFAULT VALUE ASSIGNED ONLY POINT IN FILE" << std::endl;
+#endif
+    return 1;
+  }
+  // If point is the first point in file the gradient is calculated using only the point after it
+  if (firstPoint)
+  {
+    int timestampDifference = abs(dataValues[0] - dataValuesAfter[0]);
+    for (int i = 1; i <= samples; i++)
+    {
+      change += abs(dataValues[i] - dataValuesAfter[i]);
+    }
+    gradient = (change / (samples * timestampDifference)) * GRADIENT_SCALE;
+#ifdef CALCULATED_GRADIENT_VALUE_DEBUG
+    std::cout << "CHANGE = " << change << " SAMPLES = " << samples << " TIMESTAMP DIFFERENCE = " << timestampDifference << std::endl;
+    std::cout << "FIRST POINT GRADIENT " << gradient << std::endl;
+#endif
+  }
+  // If point is the last point in file the gradient is calculated using only the point before it
+  else if (lastPoint)
+  {
+    int timestampDifference = abs(dataValues[0] - dataValuesBefore[0]);
+    for (int i = 1; i <= samples; i++)
+    {
+      change += abs(dataValues[i] - dataValuesBefore[i]);
+    }
+    gradient = (change / (samples * timestampDifference)) * GRADIENT_SCALE;
+#ifdef CALCULATED_GRADIENT_VALUE_DEBUG
+    std::cout << "CHANGE = " << change << " SAMPLES = " << samples << " TIMESTAMP DIFFERENCE = " << timestampDifference << std::endl;
+    std::cout << "LAST POINT GRADIENT " << gradient << std::endl;
+#endif
+  }
+  // Gradient is by averaging two gradients - gradient with the point before and the point after
+  // Gradient is calculated by taking the sum of absolute value change for all samples then dividing by the number of samples * change in time between readings
+  else
+  {
+    int timestampDifferenceBefore = abs(dataValues[0] - dataValuesBefore[0]);
+    int timestampDifferenceAfter = abs(dataValues[0] - dataValuesAfter[0]);
+    double changeBefore = 0;
+    double changeAfter = 0;
+    for (int i = 1; i <= samples; i++)
+    {
+      changeBefore += abs(dataValues[i] - dataValuesBefore[i]);
+      changeAfter += abs(dataValues[i] - dataValuesAfter[i]);
+    }
+    double gradientBefore = (changeBefore / (samples * timestampDifferenceBefore)) * GRADIENT_SCALE;
+#ifdef CALCULATED_GRADIENT_VALUE_DEBUG
+    std::cout << "CHANGE BEFORE = " << changeBefore << " SAMPLES = " << samples << " TIMESTAMP DIFFERENCE BEFORE = " << timestampDifferenceBefore << std::endl;
+    std::cout << "GRADIENT BEFORE " << gradientBefore << std::endl;
+#endif
+    double gradientAfter = (changeAfter / (samples * timestampDifferenceAfter)) * GRADIENT_SCALE;
+#ifdef CALCULATED_GRADIENT_VALUE_DEBUG
+    std::cout << "CHANGE AFTER = " << changeAfter << " SAMPLES = " << samples << " TIMESTAMP DIFFERENCE AFTER = " << timestampDifferenceAfter << std::endl;
+    std::cout << "GRADIENT AFTER " << gradientAfter << std::endl;
+#endif
+    gradient = (gradientBefore + gradientAfter) / 2;
+#ifdef CALCULATED_GRADIENT_VALUE_DEBUG
+    std::cout << "GRADIENT NORMAL POINT " << gradient << std::endl;
+#endif
+  }
+  // Gradient selection algorithm will work best if default gradient value is 1
+  if (gradient < 1)
+  {
+    gradient = 1;
+  }
+  // Gradient to be returned is cast to unsigned int so because that is how it is stored in the DataPoint class
+  unsigned int gradientReturned = (unsigned int)gradient;
+#ifdef CALCULATED_GRADIENT_VALUE_DEBUG
+    std::cout << "GRADIENT RETURNED " << gradientReturned << std::endl;
+#endif
+  return gradientReturned;
 }
